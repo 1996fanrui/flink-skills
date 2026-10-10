@@ -1,11 +1,9 @@
 # Flink release skills
 
-Two [Agent Skills](https://developers.openai.com/codex/skills) support **patch releases of the Apache Flink main project** (`x.y.z`, with `z > 0`). They do not cover new major or minor versions, Flink CDC, connectors, or the Kubernetes Operator.
+This repository contains two [Agent Skills](https://developers.openai.com/codex/skills) for **Apache Flink main-project patch releases** (`x.y.z`, where `z > 0`):
 
-| Skill | Purpose |
-| --- | --- |
-| [`flink-release`](flink-release/SKILL.md) | Guides a release manager from evidence gathering before the first dev@ discussion through publication and follow-up, preserving stage and RC evidence across sessions. |
-| [`verify-flink-release`](verify-flink-release/SKILL.md) | Independently checks one existing RC. The release skill invokes it before a vote; voters can invoke it separately. |
+- [`flink-release`](flink-release/SKILL.md) guides the full patch-release workflow, from evidence gathering before the first dev@ discussion through post-publication follow-up.
+- [`verify-flink-release`](verify-flink-release/SKILL.md) independently checks a release candidate; the release skill also runs it before a vote.
 
 ## Release stages
 
@@ -21,11 +19,9 @@ Two [Agent Skills](https://developers.openai.com/codex/skills) support **patch r
 | Finalization | Publish only the approved RC; verify PyPI, Maven, ASF distribution, Git tag, Jira, Docker, and website. | Public artifacts and links work. |
 | Follow-up | Announce the available release, clean up old artifacts, and finish related tasks. | Follow-up is recorded. |
 
-The skills use internal, stage-specific dependency checks. The agent gathers accessible data and resolves missing tools it can handle; it asks for human help only when necessary for the current stage. Later-stage needs can be mentioned as non-blocking preparation. Human participation remains necessary for community decisions, independent PMC votes, signing identity, and authorization of public or irreversible actions.
-
 ## Installation
 
-From the root of this repository, link the two skills to this checkout. Edits in this checkout are then available through the installed skills; keep the checkout at the same path or rerun the commands after moving it.
+From the repository root, link the skills to this checkout. Existing ordinary directories are left untouched; move them before installing. Keep this checkout at the same path, or rerun installation after moving it.
 
 ```sh
 install_skills() {
@@ -49,16 +45,9 @@ install_skills ~/.codex/skills   # Codex
 
 ## Use
 
-After installation, ask your agent in plain language or name a skill explicitly:
+Ask your agent: “Use `flink-release` to prepare the next patch release on the Flink 2.2 line.” To check an existing candidate, ask for `verify-flink-release` with the candidate's vote email or artifact links.
 
-> Use `flink-release` to prepare the next patch release for the Flink 2.2 maintenance line. First collect the current evidence and review links, then draft the community discussion. Continue from the saved release state on later sessions.
+## Documentation
 
-> Use `verify-flink-release` to independently verify the active RC linked in this `[VOTE]` email. Report only the checks actually performed.
-
-The verifier does not cast votes or publish artifacts. The release skill invokes it before drafting a vote.
-
-## Maintenance
-
-The [skill design process](SKILL_DESIGN.md) explains how past release failures become concrete checks when the skills are created or revised. A normal release run checks its **current** version and relevant community threads; it does not repeat the full historical investigation. The [requester's original statements](user-vision-verbatim.md) are preserved separately.
-
-The stage overview and installation guidance draw on the presentation of [Gravitino's release README](https://github.com/apache/gravitino/blob/main/agent-skills/gravitino-release/README.md) and [release skill](https://github.com/apache/gravitino/blob/main/agent-skills/gravitino-release/SKILL.md). [Magpie's release-management skills](https://github.com/apache/magpie/blob/main/docs/release-management/README.md), the [Beam release guide](https://github.com/apache/beam/blob/master/contributor-docs/release-guide.md), and the [Spark release process](https://spark.apache.org/release-process.html) informed the workflow review. The Flink skills follow Flink's own release policy and check prerequisites as needed during execution.
+- [Project purpose and direction](PROJECT_PURPOSE_AND_DIRECTION.md) explains the motivation, current progress, future scope, and questions about community maintenance.
+- [Skill design process](SKILL_DESIGN.md) describes how official procedures and past executions become reliable skills.
