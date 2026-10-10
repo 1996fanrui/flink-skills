@@ -9,7 +9,7 @@
 
 Use a plain-text dev@ mailing-list format after reconciling the issues. Write a complete email that can be copied and sent without filling placeholders. Get the sender's display name from the authenticated GitHub account with `gh api user --jq .name` and use it in the sign-off; if that field is empty, `null`, or inaccessible, obtain the name from the requester before producing the email. The GitHub identity does not by itself confirm willingness to serve as release manager. Write each Jira item on its own line as `- FLINK-<id> [n] - <one brief user-facing sentence>.` Put the Jira URL reference immediately after the key. Summarize the one problem users encounter or the one improvement they receive; use the Jira title and comments as evidence, not as text to copy or compress mechanically. Leave out reproduction conditions, internal components, causes, implementation, branch history, and release decisions unless a detail is essential to understand the user-visible effect. There is no fixed word limit: add only the words needed to make that effect clear. Put the reason for asking the community in the paragraph before pending items, rather than appending a separate question to each Jira summary.
 
-List only fixes present in the target maintenance branch as completed, without PR references. For a pending item, cite its Jira issue and cite a PR only if its base is the target maintenance branch; do not cite a master-branch PR as a PR for this release. Include a pending section only for verified work or a failure requiring discussion, and include a CI item only for a verified relevant failure. Write each CI item as `- CI [n] - <exact displayed CI job name>: <observed failure>.` Link `[n]` directly to that job. When logs name failing test cases, give a real `TestClass.testMethod` example; if several cases failed, say how many. Add the exception only when needed to distinguish the failure. When no failing test case is reported, name the failed process and its exit status instead. A Maven module or "core tests failed" alone does not identify the CI job. Keep the item brief and do not infer an unconfirmed cause. If there is nothing to discuss, omit the entire pending section. An unresolved Jira status alone does not create a pending item. Collect all cited bare URLs in a consecutively numbered list at the end of the email; the number of items and references follows the evidence, not the example below. Describe each link by what it opens: a Jira JQL search is an issue list, not a Jira version page. Mention a person volunteering as release manager only if that person has confirmed it.
+List only fixes present in the target maintenance branch as completed, without PR references. For a pending item, cite its Jira issue and cite a PR only if its base is the target maintenance branch; do not cite a master-branch PR as a PR for this release. Include a pending section only for verified work or a failure requiring discussion, and include a CI item only for a verified relevant failure. Write each CI item as `- CI [n] - <exact displayed CI job name>: <observed failure>.` Link `[n]` directly to that job. When logs name failing test cases, give a real `TestClass.testMethod` example; if several cases failed, say how many. Add the exception only when needed to distinguish the failure. When no failing test case is reported, name the failed process and its exit status instead. A Maven module or "core tests failed" alone does not identify the CI job. Keep the item brief and do not infer an unconfirmed cause. If there is nothing to discuss, omit the entire pending section. An unresolved Jira status alone does not create a pending item. Collect all cited bare URLs in a consecutively numbered list at the end of the email; the number of items and references follows the evidence, not the example below. Describe each link by what it opens: a Jira JQL search is an issue list, not a Jira version page. Include the opening sentence offering to serve as release manager only when that person has confirmed their willingness; otherwise omit it.
 
 ```text
 Subject: [DISCUSS] Apache Flink <version> release
@@ -17,7 +17,7 @@ To: dev@flink.apache.org
 
 Hi everyone,
 
-I would like to propose an Apache Flink <version> maintenance release.
+I would like to discuss a new Apache Flink <version> patch release. I can volunteer as the release manager.
 
 Since <previous release and publication date including year> [1], the release-<line> branch has accumulated these notable fixes:
 
@@ -26,7 +26,7 @@ Since <previous release and publication date including year> [1], the release-<l
 
 The branch comparison [4] and Jira issue list [5] show the changes and tracked issues.
 
-Please share any other fixes or compatibility concerns relevant to this release. We can propose a release candidate after agreeing on the scope and a release manager.
+Please let me know if there are any other issues we should consider before cutting a release candidate.
 
 Best,
 <display name from gh api user>
