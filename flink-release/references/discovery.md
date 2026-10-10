@@ -9,7 +9,7 @@
 
 Use a plain-text dev@ mailing-list format after reconciling the issues. Write each Jira item on its own line as `* FLINK-<id> [n] - <one brief user-facing sentence>.` Put the Jira URL reference immediately after the key. Summarize the one problem users encounter or the one improvement they receive; use the Jira title and comments as evidence, not as text to copy or compress mechanically. Leave out reproduction conditions, internal components, causes, implementation, branch history, and release decisions unless a detail is essential to understand the user-visible effect. There is no fixed word limit: add only the words needed to make that effect clear. Put the reason for asking the community in the paragraph before pending items, rather than appending a separate question to each Jira summary.
 
-List only fixes present in the target maintenance branch as completed, without PR references. For a pending item, cite its Jira issue and cite a PR only if its base is the target maintenance branch; do not cite a master-branch PR as a PR for this release. Include a pending section only for verified work or a failure requiring discussion, and include a CI item only for a verified relevant failure. In one short sentence, give the failing CI job's displayed name and link directly to that job. If its logs identify failing test cases, name them or give a representative example; if no test case failed or can be identified, state the observed error or exit status instead. A Maven module alone or a broad label such as "core tests failed" does not identify the CI job. Do not guess the cause when it is unknown. If there is nothing to discuss, omit the entire pending section. An unresolved Jira status alone does not create a pending item. Collect all cited bare URLs in a consecutively numbered list at the end of the email; the number of items and references follows the evidence, not the example below. Mention a person volunteering as release manager only if that person has confirmed it.
+List only fixes present in the target maintenance branch as completed, without PR references. For a pending item, cite its Jira issue and cite a PR only if its base is the target maintenance branch; do not cite a master-branch PR as a PR for this release. Include a pending section only for verified work or a failure requiring discussion, and include a CI item only for a verified relevant failure. Write each CI item as `* CI [n] - <exact displayed CI job name>: <observed failure>.` Link `[n]` directly to that job. When logs name failing test cases, give a real `TestClass.testMethod` example; if several cases failed, say how many. Add the exception only when needed to distinguish the failure. When no failing test case is reported, name the failed process and its exit status instead. A Maven module or "core tests failed" alone does not identify the CI job. Keep the item brief and do not infer an unconfirmed cause. If there is nothing to discuss, omit the entire pending section. An unresolved Jira status alone does not create a pending item. Collect all cited bare URLs in a consecutively numbered list at the end of the email; the number of items and references follows the evidence, not the example below. Mention a person volunteering as release manager only if that person has confirmed it.
 
 ```text
 Subject: [DISCUSS] Apache Flink <version> release
@@ -44,5 +44,13 @@ If there is verified pending work, insert this paragraph and only the applicable
 Before cutting a release candidate, please advise whether these items need action for this release:
 
 * FLINK-<id> [next reference] - <one brief sentence about the user-visible effect>.
-* CI [next reference] - <failing CI job name>: <failing test case example or observed error>.
+* CI [next reference] - <exact displayed CI job name>: <observed failure>.
+```
+
+These examples show the level of detail, not facts to reuse without checking the target job's logs:
+
+```text
+* CI [n] - AdaptiveScheduler / Test (module: core): the Java 8 test fork exited with code 239; no failing test case was reported.
+* CI [n] - Default (Java 17) / Test (module: core): LocalRecoveryTest.testStateSizeIsConsideredForLocalRecoveryOnRestart errored.
+* CI [n] - AdaptiveScheduler / Test (module: misc): two Kubernetes tests errored, including EnvSecretsDecoratorTest.testWhetherPodOrContainerIsDecorated.
 ```
