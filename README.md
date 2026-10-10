@@ -28,19 +28,23 @@ The skills use internal, stage-specific dependency checks. The agent gathers acc
 From the root of this repository, link the two skills to this checkout. Edits in this checkout are then available through the installed skills; keep the checkout at the same path or rerun the commands after moving it.
 
 ```sh
-# Claude Code
-test -f flink-release/SKILL.md && test -f verify-flink-release/SKILL.md &&
-mkdir -p ~/.claude/skills &&
-rm -rf ~/.claude/skills/flink-release ~/.claude/skills/verify-flink-release &&
-ln -s "$(pwd -P)/flink-release" ~/.claude/skills/flink-release &&
-ln -s "$(pwd -P)/verify-flink-release" ~/.claude/skills/verify-flink-release
+install_skills() {
+  skills_dir=$1
+  test -f flink-release/SKILL.md && test -f verify-flink-release/SKILL.md || return 1
+  mkdir -p "$skills_dir" || return 1
+  for skill in flink-release verify-flink-release; do
+    if [ -e "$skills_dir/$skill" ] && [ ! -L "$skills_dir/$skill" ]; then
+      echo "Move the existing directory before installing: $skills_dir/$skill" >&2
+      return 1
+    fi
+  done
+  for skill in flink-release verify-flink-release; do
+    ln -sfn "$(pwd -P)/$skill" "$skills_dir/$skill" || return 1
+  done
+}
 
-# Codex
-test -f flink-release/SKILL.md && test -f verify-flink-release/SKILL.md &&
-mkdir -p ~/.codex/skills &&
-rm -rf ~/.codex/skills/flink-release ~/.codex/skills/verify-flink-release &&
-ln -s "$(pwd -P)/flink-release" ~/.codex/skills/flink-release &&
-ln -s "$(pwd -P)/verify-flink-release" ~/.codex/skills/verify-flink-release
+install_skills ~/.claude/skills  # Claude Code
+install_skills ~/.codex/skills   # Codex
 ```
 
 ## Use
