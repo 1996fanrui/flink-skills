@@ -98,7 +98,7 @@ On macOS, `./mvnw` may fail with a false `Failed to validate Maven distribution 
 
 For a flaky-test fix, repeat the test command at least five times. When the fix changes main code and adds a regression test, also confirm that the test fails with the main-code change reverted, then restore it. If it still passes, the test proves nothing about this branch: set `needs_human`.
 
-Open a pull request only when every command passes and the fix's own tests ran; check that they were not skipped. If verification fails, find the cause. A failure the same way without your commits is unrelated: mention it in the pull request. Any other failure you cannot explain and fix within two attempts means `needs_human`, with the command, the failure, and what you tried.
+Open a pull request only when every command passes and the log shows a `Tests run:` line for the fix's own tests with none skipped. `BUILD SUCCESS` alone proves nothing: modules under `flink-end-to-end-tests` run their tests only with `-Prun-end-to-end-tests` in the `verify` phase, and YARN integration tests need `verify` too, because their programs are prepared after `package`. If verification fails, find the cause. A failure the same way without your commits is unrelated: mention it in the pull request. Any other failure you cannot explain and fix within two attempts means `needs_human`, with the command, the failure, and what you tried.
 
 ## 7. Open the pull request
 
