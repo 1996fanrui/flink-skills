@@ -51,7 +51,7 @@ The scope is small: backport a fix someone else finished, nothing more. Decide f
 
 Decide on behavior, not on the Jira type alone. Set `not_needed` only with hard evidence that a condition fails: the file, commit, or missing class. Otherwise, if you cannot tell, set `needs_human`. Do not guess.
 
-Stop with `needs_human` when the backport needs a prerequisite change the branch lacks, or changes anything Flink's `AGENTS.md` lists under "Ask first", such as public API, serialization formats, or checkpoint behavior.
+Stop with `needs_human` when the backport needs a prerequisite change the branch lacks, or changes anything Flink's `AGENTS.md` lists under "Ask first", such as public API, serialization formats, or checkpoint behavior. Do the same when the fix disables a test, for example with `@Ignore`: the verification in step 6 cannot pass, and whether to disable a test on this branch is a maintainer's call.
 
 ## 4. Create the worktree
 

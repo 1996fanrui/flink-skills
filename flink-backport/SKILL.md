@@ -85,4 +85,4 @@ Check the tracker again with `bash <skill dir>/scripts/tracker.sh list 100 merge
 
 Report one line per gap: Jira, version, state, and the pull request link or reason. List each `needs_human` gap with the decision it needs.
 
-When a run exposes a flaw in this skill, fix the skill so that the next agent does not hit it.
+When a run exposes a flaw in this skill, describe it in the report. Do not edit the skill: an uncommitted change blocks the next run's update.
