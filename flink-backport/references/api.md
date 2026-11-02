@@ -1,6 +1,6 @@
 # Backport tracker API
 
-Use `scripts/tracker.sh`. It sends the bearer token from `config.env` and exits non-zero on any HTTP error.
+Use `scripts/tracker.sh` in this skill's directory. It sends the bearer token from `config.env` and exits non-zero on any HTTP error.
 
 ## Read
 
