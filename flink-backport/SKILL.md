@@ -1,6 +1,6 @@
 ---
 name: flink-backport
-description: Backport already-merged Apache Flink fixes to maintained release branches. Claim up to three Jira issues from a backport tracker, give each one a sub-agent and per-version git worktrees, and finish every gap with a pull request, a documented "not needed", or a human handoff. Use when asked to work through Flink backport gaps.
+description: Backport already-merged Apache Flink fixes to maintained release branches. Claim up to two Jira issues from a backport tracker, give each one a sub-agent and per-version git worktrees, and finish every gap with a pull request, a documented "not needed", or a human handoff. Use when asked to work through Flink backport gaps.
 ---
 
 # Flink backport
@@ -64,10 +64,10 @@ Delete `tasks/<FLINK-KEY>/` for a Jira whose cells are all `merged` or `not_need
 
 ## 3. Claim Jiras
 
-Claim at most 3 Jiras in a run, or fewer if the requester asks. If the requester names Jiras, claim those, and still no more than 3. Otherwise finish earlier work first: claim any Jira that has a directory under `tasks/` and still has a cell in `needs_backport` or `pending_check`, then fill the rest from the list below.
+Claim at most 2 Jiras in a run, or fewer if the requester asks. If the requester names Jiras, claim those, and still no more than 2. Otherwise finish earlier work first: claim any Jira that has a directory under `tasks/` and still has a cell in `needs_backport` or `pending_check`, then fill the rest from the list below.
 
 ```sh
-bash <skill dir>/scripts/tracker.sh list <at most 3> needs_backport pending_check
+bash <skill dir>/scripts/tracker.sh list <at most 2> needs_backport pending_check
 ```
 
 Take the Jiras in the order the tracker returns them. Claiming changes nothing on the server, so run one coordinator at a time. Save each element of `jiras` to `tasks/<FLINK-KEY>/task.json`.
