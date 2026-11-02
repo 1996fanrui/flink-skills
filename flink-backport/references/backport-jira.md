@@ -78,7 +78,7 @@ In the worktree, cherry-pick the commits that landed upstream, oldest first. Tak
 git cherry-pick -x <sha>...
 ```
 
-Keep the original commit messages. Add no other trailers. Resolve only mechanical conflicts: surrounding lines, imports, or renames where the fix's logic stays identical. Record each difference in `state.md`; it goes into the pull request. If a conflict needs new logic, a redesign of the fix, or a change to a test's meaning, abort with `git cherry-pick --abort` and set `needs_human`.
+Keep the original commit messages. Add no other trailers. Resolve only mechanical conflicts: surrounding lines, imports, or renames where the fix's logic stays identical. Record each conflict and difference per commit in `state.md`; they go into the pull request. If a conflict needs new logic, a redesign of the fix, or a change to a test's meaning, abort with `git cherry-pick --abort` and set `needs_human`.
 
 ## 6. Verify
 
@@ -108,21 +108,58 @@ git push -u "$fork" "backport/<FLINK-KEY>-<version>"
 
 Title: exactly the title of the original pull request. Add no `[BP-x.y]` or other prefix: the `[<FLINK-KEY>]` must stay at the start so that the pull request links to the Jira automatically.
 
-Body: start from the target branch's `.github/PULL_REQUEST_TEMPLATE.md` with its instructions and comments removed, and fill in every section concisely.
+Compare each cherry-picked commit with its original:
 
-- Purpose: `Backport of <original PR URL> to <branch>.` plus one or two sentences on the problem.
-- Change log: the cherry-picked commits and any difference from the original.
-- Verification: the exact commands you ran and their results.
-- `cc @<original author> @<original merger>` at the end of the verification section.
-- Generative AI section: check the box and name your tool and its version, as the template asks.
+```sh
+diff <(git show --format= <original sha> | grep -Ev '^(index|@@)') \
+  <(git show --format= <backport sha> | grep -Ev '^(index|@@)')
+```
+
+Do not use `git patch-id` here: it ignores whitespace.
+
+Body: in English, write the sections below, with one table row per cherry-picked commit, even for a single commit. Leave out the rest of the target branch's `.github/PULL_REQUEST_TEMPLATE.md`, but keep its generative AI section exactly as the template words it. You will be gone when the review happens and `state.md` never reaches the reviewer, so everything a reviewer needs goes in the body.
+
+```markdown
+## What is the purpose of the change
+
+Backport of #<original number> to <branch>.
+
+## Verifying this change
+
+- `<command>` (JDK <version>): `<result, with the Tests run line>`
+
+## Difference from the original
+
+| Original commit | Conflict | Byte-identical | Changes |
+| --- | --- | --- | --- |
+| <short original sha> | No | Yes | None |
+
+## Notes
+
+- <only when there is something to say; otherwise leave this section out>
+
+cc @<original author> @<original merger>
+
+##### Was generative AI tooling used to co-author this PR?
+
+- [X] Yes (please specify the tool below)
+
+Generated-by: <tool and version>
+```
+
+- Verification: every check you ran and its result, including checks without a single command, and any reverted-fix run.
+- Conflict: `Yes` only if `git cherry-pick` stopped on that commit. A later edit to a commit that applied cleanly is `No`, with the edit listed under Changes.
+- Byte-identical: `Yes` only if the comparison above prints nothing. It covers added, removed, and context lines; only `index` lines and `@@` hunk headers are ignored, so moved line numbers do not count.
+- Changes: when a commit is not byte-identical, list each change and why the branch needs it. Say so when only context lines differ.
+- Notes: what the rest of the body cannot show, such as work under the same Jira left out on purpose and why, limits of the verification, and unrelated test failures.
 
 ```sh
 gh pr create -R apache/flink --base <branch> --head "$owner:backport/<FLINK-KEY>-<version>" \
   --title "<title>" --body-file <body file>
-gh pr edit <number> -R apache/flink --add-reviewer <original author>,<original merger>
+gh api -X POST repos/apache/flink/pulls/<number>/requested_reviewers -f 'reviewers[]=<login>'
 ```
 
-The original author and the original merger have the most context, so ask them first. Skip `$owner` and bots. GitHub silently drops a reviewer without repository access; that is fine, because the `cc` line still notifies them. Add no labels and no comments beyond this.
+The original author and the original merger have the most context, so ask them first: request each one in a separate call, and skip `$owner` and bots. Use the REST call because `gh pr edit` fails on older `gh` versions with a classic Projects deprecation error. A rejected request for a reviewer without repository access is fine, because the `cc` line still notifies them. Add no labels and no comments beyond this.
 
 Then record it:
 
