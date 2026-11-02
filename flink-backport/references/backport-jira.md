@@ -47,6 +47,8 @@ A branch needs the backport only if all of these hold:
 3. The branch still has the behavior from before the fix. Read the code on the branch to confirm it.
 4. The Jira type is Bug, or it is a user-visible Improvement declared for this patch version.
 
+Decide from the code on the branch, the Jira, and the pull requests. Do not mine CI history in bulk: if at most ten recent runs do not settle it, set `needs_human`.
+
 Decide on behavior, not on the Jira type alone. Set `not_needed` only with hard evidence that a condition fails: the file, commit, or missing class. Otherwise, if you cannot tell, set `needs_human`. Do not guess.
 
 Stop with `needs_human` when the backport needs a prerequisite change the branch lacks, or changes anything Flink's `AGENTS.md` lists under "Ask first", such as public API, serialization formats, or checkpoint behavior.
