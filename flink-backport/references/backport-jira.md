@@ -24,7 +24,7 @@ gh pr list -R apache/flink --state all --search "<FLINK-KEY> in:title" --json nu
 
 Read the diff until you understand the root cause and why the fix works. Read the Jira comments: a maintainer may already have ruled a branch in or out.
 
-A cell's `note` is a maintainer's instruction. Follow it. If it asks for something outside this guide, such as pinging the author first, set the cell to `needs_human` and quote the note.
+A cell's `note` is a maintainer's instruction. Follow it. If it asks for something outside this guide, such as pinging the author first, set the cell to `needs_human` and quote the note. The exception is when the person the note names already has an open pull request for this branch: that settles the note, so step 2 applies and the cell stays visible to the coordinator's reconciliation.
 
 ## 2. Check whether the branch already has it
 
