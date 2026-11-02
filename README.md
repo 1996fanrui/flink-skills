@@ -1,9 +1,13 @@
-# Flink release skills
+# Flink skills
 
-This repository contains two [Agent Skills](https://developers.openai.com/codex/skills) for **Apache Flink main-project patch releases** (`x.y.z`, where `z > 0`):
+This repository contains [Agent Skills](https://developers.openai.com/codex/skills) for maintaining **Apache Flink**. Two of them cover main-project patch releases (`x.y.z`, where `z > 0`):
 
 - [`flink-release`](flink-release/SKILL.md) guides the full patch-release workflow, from evidence gathering before the first dev@ discussion through post-publication follow-up.
 - [`verify-flink-release`](verify-flink-release/SKILL.md) independently checks a release candidate; the release skill also runs it before a vote.
+
+A third works on the fixes that those releases ship:
+
+- [`flink-backport`](flink-backport/SKILL.md) backports merged fixes to maintained release branches. It claims up to three Jira issues from a backport tracker and finishes each gap with a pull request, a documented "not needed", or a human handoff. It needs a tracker that implements the API in [its reference](flink-backport/references/api.md).
 
 ## Release stages
 
@@ -26,15 +30,15 @@ From the repository root, link the skills to this checkout. Existing ordinary di
 ```sh
 install_skills() {
   skills_dir=$1
-  test -f flink-release/SKILL.md && test -f verify-flink-release/SKILL.md || return 1
+  test -f flink-release/SKILL.md && test -f verify-flink-release/SKILL.md && test -f flink-backport/SKILL.md || return 1
   mkdir -p "$skills_dir" || return 1
-  for skill in flink-release verify-flink-release; do
+  for skill in flink-release verify-flink-release flink-backport; do
     if [ -e "$skills_dir/$skill" ] && [ ! -L "$skills_dir/$skill" ]; then
       echo "Move the existing directory before installing: $skills_dir/$skill" >&2
       return 1
     fi
   done
-  for skill in flink-release verify-flink-release; do
+  for skill in flink-release verify-flink-release flink-backport; do
     ln -sfn "$(pwd -P)/$skill" "$skills_dir/$skill" || return 1
   done
 }
@@ -45,7 +49,7 @@ install_skills ~/.codex/skills   # Codex
 
 ## Use
 
-Ask your agent: “Use `flink-release` to prepare the next patch release on the Flink 2.2 line.” To check an existing candidate, ask for `verify-flink-release` with the candidate's vote email or artifact links.
+Ask your agent: “Use `flink-release` to prepare the next patch release on the Flink 2.2 line.” To check an existing candidate, ask for `verify-flink-release` with the candidate's vote email or artifact links. To work through backport gaps, ask for `flink-backport`.
 
 ## Documentation
 
