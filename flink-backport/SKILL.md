@@ -18,7 +18,7 @@ Rules for every agent in this workflow:
 
 ## 1. Set up
 
-Paths like `scripts/` are relative to this skill's directory. Everything lives in the fixed workspace `~/flink-backport-workspaces/`:
+`<skill dir>` below is the directory that holds this file. Everything lives in the fixed workspace `~/flink-backport-workspaces/`:
 
 ```text
 ~/flink-backport-workspaces/
@@ -40,7 +40,7 @@ Paths like `scripts/` are relative to this skill's directory. Everything lives i
 Load the settings in every new shell. `env.sh` also finds the pull request author and the git remotes, and fails if one is missing:
 
 ```sh
-. scripts/env.sh
+. <skill dir>/scripts/env.sh
 git -C "$FLINK_SOURCE_REPO" fetch --quiet "$upstream"
 ```
 
@@ -51,7 +51,7 @@ Do not change the working tree of `FLINK_SOURCE_REPO`. All work happens in workt
 List the gaps that wait for review:
 
 ```sh
-bash scripts/tracker.sh list 100 pr_open
+bash <skill dir>/scripts/tracker.sh list 100 pr_open
 ```
 
 For each cell in state `pr_open`, read each open pull request with `gh pr view <number> -R apache/flink --json state,mergedAt,mergeCommit,author`. Then update the cell as [the API reference](references/api.md) describes:
@@ -67,21 +67,21 @@ Delete `tasks/<FLINK-KEY>/` for a Jira whose cells are all `merged` or `not_need
 Claim at most 3 Jiras in a run, or fewer if the requester asks. If the requester names Jiras, claim those, and still no more than 3.
 
 ```sh
-bash scripts/tracker.sh list 3 needs_backport pending_check
+bash <skill dir>/scripts/tracker.sh list <at most 3> needs_backport pending_check
 ```
 
-The response keeps the tracker's priority order. Claiming changes nothing on the server, so run one coordinator at a time. Save each Jira to `tasks/<FLINK-KEY>/task.json`.
+Take the Jiras in the order the tracker returns them. Claiming changes nothing on the server, so run one coordinator at a time. Save each element of `jiras` to `tasks/<FLINK-KEY>/task.json`.
 
 ## 4. Start the sub-agents
 
-Start one sub-agent per Jira, in parallel. Each owns all versions of its Jira, handles them one at a time, and starts no further sub-agents, so that it can reuse what it learned on one branch on the next. Give it this prompt, filling in the absolute paths:
+Start one sub-agent per Jira, in parallel. Each owns all versions of its Jira, handles them one at a time, and starts no further sub-agents, so that it can reuse what it learned on one branch on the next. If you cannot start sub-agents, follow the guide yourself. Give it this prompt, filling in the absolute paths:
 
 > Follow `<skill dir>/references/backport-jira.md` for `<FLINK-KEY>`. The claimed task is `<workspace>/tasks/<FLINK-KEY>/task.json`. Return one line per version with the final state and pull request link or reason.
 
 
 ## 5. Report
 
-Check the tracker again with `bash scripts/tracker.sh list 100 merged pr_open needs_human not_needed` and confirm that every claimed gap left `needs_backport` and `pending_check`. Anything still there is unfinished: say so and give the reason.
+Check the tracker again with `bash <skill dir>/scripts/tracker.sh list 100 merged pr_open needs_human not_needed` and confirm that every claimed gap left `needs_backport` and `pending_check`. Anything still there is unfinished: say so and give the reason.
 
 Report one line per gap: Jira, version, state, and the pull request link or reason. List each `needs_human` gap with the decision it needs.
 
