@@ -64,7 +64,7 @@ Delete `tasks/<FLINK-KEY>/` for a Jira whose cells are all `merged` or `not_need
 
 ## 3. Claim Jiras
 
-Claim at most 3 Jiras in a run, or fewer if the requester asks. If the requester names Jiras, claim those, and still no more than 3.
+Claim at most 3 Jiras in a run, or fewer if the requester asks. If the requester names Jiras, claim those, and still no more than 3. Otherwise finish earlier work first: claim any Jira that has a directory under `tasks/` and still has a cell in `needs_backport` or `pending_check`, then fill the rest from the list below.
 
 ```sh
 bash <skill dir>/scripts/tracker.sh list <at most 3> needs_backport pending_check
@@ -74,7 +74,7 @@ Take the Jiras in the order the tracker returns them. Claiming changes nothing o
 
 ## 4. Start the sub-agents
 
-Start one sub-agent per Jira, in parallel. Each owns all versions of its Jira, handles them one at a time, and starts no further sub-agents, so that it can reuse what it learned on one branch on the next. If you cannot start sub-agents, follow the guide yourself. Give it this prompt, filling in the absolute paths:
+Start one sub-agent per Jira, in parallel, and wait until all of them have finished. Stopping earlier ends the run and kills them. Each owns all versions of its Jira, handles them one at a time, and starts no further sub-agents, so that it can reuse what it learned on one branch on the next. If you cannot start sub-agents, follow the guide yourself. Give it this prompt, filling in the absolute paths:
 
 > Follow `<skill dir>/references/backport-jira.md` for `<FLINK-KEY>`. The claimed task is `<workspace>/tasks/<FLINK-KEY>/task.json`. Return one line per version with the final state and pull request link or reason.
 
