@@ -96,7 +96,15 @@ Use `package`, not `test`: integration tests that start a MiniCluster need the p
 
 On macOS, `./mvnw` may fail with a false `Failed to validate Maven distribution SHA-256` error. If so, use an installed Maven of the version in `.mvn/wrapper/maven-wrapper.properties`.
 
-For a flaky-test fix, repeat the test command at least five times. When the fix changes main code and adds a regression test, also confirm that the test fails with the main-code change reverted, then restore it. If it still passes, the test proves nothing about this branch: set `needs_human`.
+For a flaky-test fix, repeat the test command at least five times. Once a run has passed and no source has changed since, add these flags to the repeats, which take about a minute instead of five:
+
+```sh
+-o -Dmaven.main.skip=true -Dcheckstyle.skip -Dspotless.check.skip=true -Drat.skip=true -Djapicmp.skip=true -Dmaven.source.skip=true -Dmaven.javadoc.skip=true
+```
+
+They skip compiling main code, so never use them after changing code, including the reverted run below.
+
+When the fix changes main code and adds a regression test, also confirm that the test fails with the main-code change reverted, then restore it. If it still passes, the test proves nothing about this branch: set `needs_human`.
 
 Open a pull request only when every command passes and the log shows a `Tests run:` line for the fix's own tests with none skipped. `BUILD SUCCESS` alone proves nothing: modules under `flink-end-to-end-tests` run their tests only with `-Prun-end-to-end-tests` in the `verify` phase, and YARN integration tests need `verify` too, because their programs are prepared after `package`. If verification fails, find the cause. A failure the same way without your commits is unrelated: mention it in the pull request. Any other failure you cannot explain and fix within two attempts means `needs_human`, with the command, the failure, and what you tried.
 
