@@ -7,7 +7,7 @@ This repository contains [Agent Skills](https://developers.openai.com/codex/skil
 
 A third works on the fixes that those releases ship:
 
-- [`flink-backport`](flink-backport/SKILL.md) backports merged fixes to maintained release branches. It claims up to three Jira issues from a backport tracker and finishes each gap with a pull request, a documented "not needed", or a human handoff. It needs a tracker that implements the API in [its reference](flink-backport/references/api.md).
+- [`flink-backport`](flink-backport/SKILL.md) backports merged fixes to maintained release branches. It claims up to two Jira issues from a backport tracker and finishes each gap with a pull request, a documented "not needed", or a human handoff. It needs a tracker that implements the API in [its reference](flink-backport/references/api.md).
 
 ## Release stages
 
