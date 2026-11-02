@@ -47,6 +47,8 @@ A branch needs the backport only if all of these hold:
 3. The branch still has the behavior from before the fix. Read the code on the branch to confirm it.
 4. The Jira type is Bug, or it is a user-visible Improvement declared for this patch version.
 
+`FLINK_SOURCE_REPO` is a blobless clone, so `git log -S` downloads file contents and runs for minutes. Use `git grep <text> <ref>` to check a branch.
+
 The scope is small: backport a fix someone else finished, nothing more. Decide from the code on the branch, the Jira, and the pull requests. Do not analyze CI logs. If those sources do not settle it, set `needs_human`.
 
 Decide on behavior, not on the Jira type alone. Set `not_needed` only with hard evidence that a condition fails: the file, commit, or missing class. Otherwise, if you cannot tell, set `needs_human`. Do not guess.
