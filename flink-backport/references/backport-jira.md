@@ -18,7 +18,7 @@ Keep notes in `tasks/<FLINK-KEY>/state.md`: the fix, its commits, what differs p
 
 ```sh
 curl -fsS "https://issues.apache.org/jira/rest/api/2/issue/<FLINK-KEY>?fields=summary,description,status,fixVersions,comment"
-gh pr view <origin_pr_number> -R apache/flink --json title,body,author,mergedBy,mergeCommit,files
+gh pr view <origin_pr_number> -R apache/flink --json title,body,author,mergedBy,reviews,mergeCommit,files
 gh pr list -R apache/flink --state all --search "<FLINK-KEY> in:title" --json number,title,state,baseRefName,author,mergedAt,url
 ```
 
@@ -138,8 +138,6 @@ Backport of #<original number> to <branch>.
 
 - <only when there is something to say; otherwise leave this section out>
 
-cc @<original author> @<original merger>
-
 ##### Was generative AI tooling used to co-author this PR?
 
 - [X] Yes (please specify the tool below)
@@ -156,10 +154,10 @@ Generated-by: <tool and version>
 ```sh
 gh pr create -R apache/flink --base <branch> --head "$owner:backport/<FLINK-KEY>-<version>" \
   --title "<title>" --body-file <body file>
-gh api -X POST repos/apache/flink/pulls/<number>/requested_reviewers -f 'reviewers[]=<login>'
+gh pr comment <number> -R apache/flink --body-file <comment file>
 ```
 
-The original author and the original merger have the most context, so ask them first: request each one in a separate call, and skip `$owner` and bots. Use the REST call because `gh pr edit` fails on older `gh` versions with a classic Projects deprecation error. A rejected request for a reviewer without repository access is fine, because the `cc` line still notifies them. Add no labels and no comments beyond this.
+The people behind the original pull request have the most context, so ask them to review in one comment: `Hi @<login> @<login>, could you help review this backport when you have time? Thanks!`. Mention, in this order and each login once, the original author, the original merger, and every reviewer whose state in `reviews` is `APPROVED`; skip `$owner` and bots. If nobody is left, post no comment. Do not request reviewers, and add no labels and no other comments.
 
 Then record it:
 
