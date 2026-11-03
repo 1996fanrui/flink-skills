@@ -14,7 +14,8 @@ The root has this layout. Create a directory only when its stage needs it:
     flink-web/
   releases/
     <x.y.z>/
-      state.md
+      state.md                   # Facts and evidence for this version
+      TODO.md                    # Stage progress checklist, see todo.md
       flink/                     # Flink worktree for this version
       flink-web/                 # Website worktree, only when needed
       rcN/                       # Artifacts and evidence for this candidate
@@ -24,7 +25,7 @@ The root has this layout. Create a directory only when its stage needs it:
 
 Record unusual or hard-to-rediscover locations in `workspace.md`: existing Flink and flink-web repositories, environment files, Maven settings, signing setup locations, or other setup facts learned from the requester. Ordinary locations that the agent can reliably rediscover need not be recorded. Record file paths and necessary context, never token values, passwords, private keys, or copied credential-file contents. Do not treat a saved path or old access result as current proof; check it when the corresponding stage needs it. Ask for a missing fact only after attempting discovery and only if it blocks the current stage. Update this document after a new answer or verified discovery so a later run need not ask again. If several releases run concurrently, serialize writes to this shared document and reread it before updating; keep each version's progress in its separate state file.
 
-Once the target patch version is resolved, create or resume `releases/<x.y.z>/state.md`. Keep stage, worktree paths, source repository and remote identity, selected maintenance-branch commit, RC identity, evidence links, completed actions, blockers, and next action there. Record each RC's artifacts and evidence in its own `rcN/`; do not mix candidates. On resume, read the record, then recheck local paths, Git identity and commit, and external status before taking the next action. A missing or stale path triggers rediscovery, not an automatic repeat question or an assumption that an old action succeeded.
+Once the target patch version is resolved, create or resume `releases/<x.y.z>/state.md` and `releases/<x.y.z>/TODO.md`. Keep stage, worktree paths, source repository and remote identity, selected maintenance-branch commit, RC identity, evidence links, completed actions, blockers, and next action in `state.md`; keep stage progress and check-off evidence in `TODO.md` (see [todo.md](todo.md)). Record each RC's artifacts and evidence in its own `rcN/`; do not mix candidates. On resume, read the record, then recheck local paths, Git identity and commit, and external status before taking the next action. A missing or stale path triggers rediscovery, not an automatic repeat question or an assumption that an old action succeeded.
 
 ## Prefer existing repositories
 
