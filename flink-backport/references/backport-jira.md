@@ -157,7 +157,7 @@ gh pr create -R apache/flink --base <branch> --head "$owner:backport/<FLINK-KEY>
 gh pr comment <number> -R apache/flink --body-file <comment file>
 ```
 
-The people behind the original pull request have the most context, so ask them to review in one comment: `Hi @<login> @<login>, could you help review this backport when you have time? Thanks!`. Mention, in this order and each login once, the original author, the original merger, and every reviewer whose state in `reviews` is `APPROVED`; skip `$owner` and bots. If nobody is left, post no comment. Do not request reviewers, and add no labels and no other comments.
+The people behind the original pull request have the most context, so ask them to review in one comment: `Hi @<login> @<login>, since you authored or reviewed the original PR #<number>, could you help review this backport when you have time? Thanks!`, where `#<number>` is the original pull request, not the backport. Mention, in this order and each login once, the original author, the original merger, and every reviewer whose state in `reviews` is `APPROVED`; skip `$owner` and bots. If nobody is left, post no comment. Do not request reviewers, and add no labels and no other comments.
 
 Then record it:
 
