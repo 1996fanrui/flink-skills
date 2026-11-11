@@ -47,11 +47,11 @@ A branch needs the backport only if all of these hold:
 3. The branch still has the behavior from before the fix. Read the code on the branch to confirm it.
 4. The Jira type is Bug, or it is a user-visible Improvement declared for this patch version.
 
-The scope is small: backport a fix someone else finished, nothing more. Decide from the code on the branch, the Jira, and the pull requests. Do not analyze CI logs. If those sources do not settle it, set `needs_human`.
+The scope is small: backport a fix someone else finished, as it was merged, nothing more. Upstream reviewers already accepted its content, including any test it disables, so do not second-guess it. Decide from the code on the branch, the Jira, and the pull requests. Do not analyze CI logs. If those sources do not settle it, set `needs_human`.
 
 Decide on behavior, not on the Jira type alone. Set `not_needed` only with hard evidence that a condition fails: the file, commit, or missing class. Otherwise, if you cannot tell, set `needs_human`. Do not guess.
 
-Stop with `needs_human` when the backport needs a prerequisite change the branch lacks, or changes anything Flink's `AGENTS.md` lists under "Ask first", such as public API, serialization formats, or checkpoint behavior. Do the same when the fix disables a test, for example with `@Ignore`: the verification in step 6 cannot pass, and whether to disable a test on this branch is a maintainer's call. Do the same when you would otherwise have to ask in the pull request whether the backport is wanted on this branch, for example a behavior change on a branch outside the Jira's fix versions: that question goes in the `needs_human` note, not in a pull request.
+Stop with `needs_human` when the backport needs a prerequisite change the branch lacks, or changes anything Flink's `AGENTS.md` lists under "Ask first", such as public API, serialization formats, or checkpoint behavior. Do the same when you would otherwise have to ask in the pull request whether the backport is wanted on this branch, for example a behavior change on a branch outside the Jira's fix versions: that question goes in the `needs_human` note, not in a pull request.
 
 ## 4. Create the worktree
 
@@ -96,9 +96,9 @@ Use `package`, not `test`: integration tests that start a MiniCluster need the p
 
 On macOS, `./mvnw` may fail with a false `Failed to validate Maven distribution SHA-256` error. If so, use an installed Maven of the version in `.mvn/wrapper/maven-wrapper.properties`.
 
-For a flaky-test fix, repeat the test command at least five times. When the fix changes main code and adds a regression test, also confirm that the test fails with the main-code change reverted, then restore it. If it still passes, the test proves nothing about this branch: set `needs_human`.
+For a flaky-test fix, repeat the test command at least five times, unless the fix disables that test. When the fix changes main code and adds a regression test, also confirm that the test fails with the main-code change reverted, then restore it. If it still passes, the test proves nothing about this branch: set `needs_human`.
 
-Open a pull request only when every command passes and the log shows a `Tests run:` line for the fix's own tests with none skipped. The one exception is a test variant skipped by an assumption the original fix itself adds, with at least one other variant of that test running and passing: name those skips under Notes. `BUILD SUCCESS` alone proves nothing: modules under `flink-end-to-end-tests` run their tests only with `-Prun-end-to-end-tests` in the `verify` phase, and YARN integration tests need `verify` too, because their programs are prepared after `package`. If verification fails, find the cause. A failure the same way without your commits is unrelated: mention it in the pull request. Any other failure you cannot explain and fix within two attempts means `needs_human`, with the command, the failure, and what you tried.
+Open a pull request only when every command passes and the log shows a `Tests run:` line for the fix's own tests. A skip is expected only when the backported commits cause it, for example a test they disable with `@Ignore` or `@Disabled`, or a variant skipped by an assumption they add: name those skips under Notes. Every other test of the fix must run and pass. `BUILD SUCCESS` alone proves nothing: modules under `flink-end-to-end-tests` run their tests only with `-Prun-end-to-end-tests` in the `verify` phase, and YARN integration tests need `verify` too, because their programs are prepared after `package`. If verification fails, find the cause. A failure the same way without your commits is unrelated: mention it in the pull request. Any other failure you cannot explain and fix within two attempts means `needs_human`, with the command, the failure, and what you tried.
 
 ## 7. Open the pull request
 
@@ -149,7 +149,7 @@ Generated-by: <tool and version>
 - Conflict: `Yes` only if `git cherry-pick` stopped on that commit. A later edit to a commit that applied cleanly is `No`, with the edit listed under Changes.
 - Byte-identical: `Yes` only if the comparison above prints nothing. It covers added, removed, and context lines; only `index` lines and `@@` hunk headers are ignored, so moved line numbers do not count.
 - Changes: when a commit is not byte-identical, list each change and why the branch needs it. Say so when only context lines differ.
-- Notes: what the rest of the body cannot show, such as work under the same Jira left out on purpose and why, limits of the verification, and unrelated test failures.
+- Notes: what the rest of the body cannot show, such as work under the same Jira left out on purpose and why, tests the backported commits skip, limits of the verification, and unrelated test failures.
 
 ```sh
 gh pr create -R apache/flink --base <branch> --head "$owner:backport/<FLINK-KEY>-<version>" \
