@@ -60,6 +60,8 @@ For each cell in state `pr_open`, read each open pull request with `gh pr view <
 - Closed without merge: `needs_human`, with a note giving the pull request number and the reason from its last comments.
 - Still open: nothing to do.
 
+Then list `needs_human` the same way. A cell goes stale once the fix lands on its branch by any route, such as someone else's pull request, or once the event its note waits on happens, such as a named pull request or a dependency Jira merging on this branch. Check every cell with `git -C "$FLINK_SOURCE_REPO" log "$upstream/<branch>" --grep <FLINK-KEY>`, and check a named event with `gh pr view` and the branch log. If nothing happened, leave the cell, even when someone else's pull request for it is still open. Otherwise move the cell to `needs_backport` with a note naming what happened. If the branch log now shows the fix, follow with `merged`, with the pull request (`pr_source` `external` if someone else opened it) or a note naming the commit. The server rejects `needs_human` straight to `merged`. Leave every cell that is not stale to maintainers.
+
 Delete `tasks/<FLINK-KEY>/` for a Jira whose cells are all `merged` or `not_needed`, after confirming with `git worktree list` that it holds no worktree.
 
 ## 3. Claim Jiras
