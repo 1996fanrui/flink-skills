@@ -1,10 +1,27 @@
-# Per-version progress checklist (`TODO.md`)
+# Release progress documents
 
-Create `releases/<x.y.z>/TODO.md` as soon as Discovery resolves the target patch version, and keep it as that version's single stage-level progress record. It is a checklist, not a fact store: every tick names the evidence that justifies it, and every unchecked item names the blocking condition. Recompute checkboxes from evidence at the end of each stage; never tick by assumption.
+Each document answers one question, so no fact is kept twice:
 
-## Template
+- `releases/<x.y.z>/state.md` — what is true for this version: stage, exact version/RC/commit, evidence links, actions, results, blockers, and next action. Overwrite old conclusions as they change; reread it on resume.
+- `releases/<x.y.z>/TODO.md` — how far this version has progressed: one checkbox per stage item, each tick naming its evidence. Recompute it from `state.md` and the stage documents at each stage close; it carries no standalone facts. When they disagree, the evidence wins.
+- Stage documents at the workspace root — what remains to be done in the current stage, by whom, across all versions released together. Delete them when every version in that release round is complete; its durable facts live in each `state.md`.
 
-Use these six stage sections in order, replacing `<x.y.z>` with the target version. Keep only items that apply to this patch release; add a specific blocker line only when evidence names it.
+## Stage documents
+
+| Document | Stage | Content |
+| --- | --- | --- |
+| `1-pre-rc-todo.md` | Discovery through scope freeze | Blocking items only: Wait, Uncertain, and issues that only need closing, classified with [scope triage](scope.md) |
+| `1-pre-rc-optional.md` | Discovery through scope freeze | Non-blocking items, open for community volunteers |
+| `2-ci-gate-todo.md` | CI baseline, after the freeze and before tagging | Per branch, the release commit's PR/Azure build, the latest Nightly, and every non-green job, per [CI triage](ci-triage.md) |
+| `3-rc-build-todo.md` | RC build | Build prerequisites from the [dependency checks](dependencies.md): signing key, JDK, publishing credentials, wheel build path, worktree at the frozen SHA |
+
+Create a document when its stage becomes current. List only that stage's blockers; do not chase later-stage prerequisites such as a GPG key, a JDK, or credentials while scope is open, beyond a non-blocking notice for slow requests such as a PyPI quota increase. Start each document with its data time, the target versions and branches, and, for the scope documents, the deadline and last scan time.
+
+In the scope documents, give each class one matrix: rows are Jira issues, columns are target versions, and each cell states what that branch needs, for example `Y — PR #n [k]`, `PR #n [k] awaiting review (<reviewer>, CI <state>)`, `needs a backport PR`, or `– (not affected)`. Add columns for the user impact (or, in the optional document, why it does not block) and whom to mention. The other documents list one row per item with its status, evidence, and the human action needed. Cite as `FLINK-<id> [n]` and `PR #<n> [n]`, and list every URL once under a closing `References` section.
+
+## `TODO.md` template
+
+Replace `<x.y.z>` with the target version. Keep only items that apply to this patch release.
 
 ```markdown
 # Apache Flink <x.y.z> release TODO
@@ -18,17 +35,17 @@ Use these six stage sections in order, replacing `<x.y.z>` with the target versi
 - [ ] Community consensus on scope reached; evidence: reply URLs or recorded consensus.
 
 ## Stage 2 · Scope freeze
-- [ ] Every unresolved Jira issue with this Fix Version resolved or moved out; evidence: issue key + disposition link for each.
+- [ ] Every unresolved Jira issue with this Fix Version resolved, moved to the next patch version, or its Fix Version removed; evidence: issue key + disposition link for each.
 - [ ] Release notes and announced changes reconciled against the branch; evidence: Jira release-notes URL.
 - [ ] Frozen scope recorded; evidence: branch HEAD SHA this freeze covers.
 
 ## Stage 3 · CI baseline
 - [ ] Release commit's PR/Azure build `succeeded`; evidence: flinkbot CI report + Azure build URL.
 - [ ] Latest Nightly before tagging green; evidence: run URL + commit SHA (only the last run needs to be green).
-- [ ] Every non-green job triaged as flaky / real regression / environment; evidence: [CI triage](ci-triage.md) note per job.
+- [ ] Every non-green job triaged as flaky / real regression / environment; evidence: [CI triage](ci-triage.md) row per job in `2-ci-gate-todo.md`.
 
 ## Stage 4 · RC build
-- [ ] Release commit frozen and recorded; evidence: SHA.
+- [ ] `3-rc-build-todo.md` has no open row for this version.
 - [ ] Tag `release-<x.y.z>-rc<N>` signed and pushed; evidence: tag URL + fingerprint.
 - [ ] Source/binary artifacts, ASC/SHA512, Nexus staging, Python wheels built; evidence: staging URLs + hashes.
 - [ ] Website PR proposed; evidence: PR URL.
@@ -46,16 +63,10 @@ Use these six stage sections in order, replacing `<x.y.z>` with the target versi
 
 The six stages map onto the workflow as: Stage 1 = Discovery + Discussion, Stages 2–3 = Preparation, Stage 4 = RC creation, Stage 5 = RC verification + Vote and result, Stage 6 = Finalization + Follow-up.
 
-## `state.md` vs `TODO.md`
-
-`state.md` stores facts and their evidence: the current stage, exact version/RC/commit, evidence links, actions, results, blockers, and next action. Its old conclusions are overwritten as they change; reread it on resume.
-
-`TODO.md` stores only stage-level progress: which stages are done, which items remain, and the evidence that ticked each. It is recomputed from `state.md` at each stage close and carries no standalone facts. When the two disagree, `state.md` evidence wins and `TODO.md` is recomputed from it.
-
 ## Stage gates
 
 Check each gate before crossing the boundary; a failed gate is a hard stop.
 
-1. **Scope freeze → RC build.** Proceed only when every issue with this version's Fix Version has an evidenced disposition and the frozen scope is recorded; otherwise stay in Stage 2.
+1. **Scope freeze → RC build.** Proceed only when every unresolved issue with this version's Fix Version has an evidenced disposition (resolved, moved to the next patch version, or Fix Version removed, per [scope triage](scope.md)), `1-pre-rc-todo.md` has no open row for this version, and the frozen scope is recorded; otherwise stay in Stage 2.
 2. **CI baseline → RC tag.** Create the tag only when the release commit's PR/Azure build is `succeeded` and the latest Nightly before tagging is green. Do not require a sustained all-green window; proceeding despite a red window is an exception the release manager must record, with its reason, in `state.md`/`TODO.md`.
 3. **Verify → VOTE.** Send `[VOTE]` only after `verify-flink-release` passes for the exact candidate to be voted; otherwise stay in Stage 4/5 and rebuild a numbered new RC.

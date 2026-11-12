@@ -2,20 +2,24 @@
 
 ## Fixed entry point
 
-Start every run at `~/flink-release-workspaces/`, independent of the current working directory or previous conversation. Read `workspace.md` if present and scan `releases/*/state.md` for in-progress versions before creating anything. Create the root and a short `workspace.md` on first use, with headings such as `Repositories`, `Local configuration locations`, and `Other notes`. The document is natural-language memory, not a fixed key/value schema. Keep one current statement per fact: update obsolete locations rather than appending contradictory notes.
+Start every run at `~/flink-release-workspaces/`, independent of the current working directory or previous conversation. Read `workspace.md` if present, then any stage documents, and scan `releases/*/state.md` for in-progress versions before creating anything. Create the root and a short `workspace.md` on first use, with headings such as `Repositories`, `Local configuration locations`, and `Other notes`. The document is natural-language memory, not a fixed key/value schema. Keep one current statement per fact: update obsolete locations rather than appending contradictory notes.
 
 The root has this layout. Create a directory only when its stage needs it:
 
 ```text
 ~/flink-release-workspaces/
   workspace.md
+  1-pre-rc-todo.md              # Stage documents for the current release round, see todo.md
+  1-pre-rc-optional.md
+  2-ci-gate-todo.md
+  3-rc-build-todo.md
   repositories/                 # Only for projects missing a usable local repository
     flink/
     flink-web/
   releases/
     <x.y.z>/
       state.md                   # Facts and evidence for this version
-      TODO.md                    # Stage progress checklist, see todo.md
+      TODO.md                    # Stage progress for this version, see todo.md
       flink/                     # Flink worktree for this version
       flink-web/                 # Website worktree, only when needed
       rcN/                       # Artifacts and evidence for this candidate
@@ -25,7 +29,7 @@ The root has this layout. Create a directory only when its stage needs it:
 
 Record unusual or hard-to-rediscover locations in `workspace.md`: existing Flink and flink-web repositories, environment files, Maven settings, signing setup locations, or other setup facts learned from the requester. Ordinary locations that the agent can reliably rediscover need not be recorded. Record file paths and necessary context, never token values, passwords, private keys, or copied credential-file contents. Do not treat a saved path or old access result as current proof; check it when the corresponding stage needs it. Ask for a missing fact only after attempting discovery and only if it blocks the current stage. Update this document after a new answer or verified discovery so a later run need not ask again. If several releases run concurrently, serialize writes to this shared document and reread it before updating; keep each version's progress in its separate state file.
 
-Once the target patch version is resolved, create or resume `releases/<x.y.z>/state.md` and `releases/<x.y.z>/TODO.md`. Keep stage, worktree paths, source repository and remote identity, selected maintenance-branch commit, RC identity, evidence links, completed actions, blockers, and next action in `state.md`; keep stage progress and check-off evidence in `TODO.md` (see [todo.md](todo.md)). Record each RC's artifacts and evidence in its own `rcN/`; do not mix candidates. On resume, read the record, then recheck local paths, Git identity and commit, and external status before taking the next action. A missing or stale path triggers rediscovery, not an automatic repeat question or an assumption that an old action succeeded.
+Once the target patch version is resolved, create or resume `releases/<x.y.z>/state.md` and `releases/<x.y.z>/TODO.md` with the responsibilities defined in [progress documents](todo.md); `state.md` also records worktree paths and the source repository and remote identity. Record each RC's artifacts and evidence in its own `rcN/`; do not mix candidates. On resume, read the record, then recheck local paths, Git identity and commit, and external status before taking the next action. A missing or stale path triggers rediscovery, not an automatic repeat question or an assumption that an old action succeeded.
 
 ## Prefer existing repositories
 
