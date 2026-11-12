@@ -19,7 +19,7 @@ A third works on the fixes that those releases ship:
 | Preparation | After consensus, check Jira release notes, backports, compatibility, access, signing identity, build requirements, and release-related PRs. | A ready branch and resolved blockers. |
 | RC creation | Build and stage a signed, version-consistent RC and check its source, binaries, Maven/Python packages, CI, and website PR as they are produced. | An RC with traceable artifacts, commit, and evidence. |
 | RC verification | Run `verify-flink-release` against the exact RC before proposing it for a vote. Fix failures and fully verify a new RC. | A preflight result; voters still verify independently. |
-| Vote and result | Draft `[VOTE]`, follow replies, handle cancellation or a replacement RC, and tally binding votes against the current PMC roster. | A recorded community vote and separate `[RESULT][VOTE]`. |
+| Vote and result | Start `[VOTE]` through Apache Trusted Releases (ATR), follow replies, handle cancellation or a replacement RC, and tally binding votes against the current PMC roster. | A recorded community vote and ATR's `[RESULT]` reply. |
 | Finalization | Publish only the approved RC; verify PyPI, Maven, ASF distribution, Git tag, Jira, Docker, and website. | Public artifacts and links work. |
 | Follow-up | Announce the available release, clean up old artifacts, and finish related tasks. | Follow-up is recorded. |
 
