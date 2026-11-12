@@ -53,14 +53,15 @@ Decide on behavior, not on the Jira type alone. Set `not_needed` only with hard 
 
 Stop with `needs_human` when the backport needs a prerequisite change the branch lacks, or changes anything Flink's `AGENTS.md` lists under "Ask first", such as public API, serialization formats, or checkpoint behavior. Do the same when you would otherwise have to ask in the pull request whether the backport is wanted on this branch, for example a behavior change on a branch outside the Jira's fix versions: that question goes in the `needs_human` note, not in a pull request.
 
-## 4. Create the worktree
+## 4. Use the prepared worktree
 
-If the worktree exists, confirm it is on the expected branch and continue. Otherwise:
+Your prompt gives each version's worktree, private Maven repository, and branch. If it gives none for a version, as when you were started by hand, prepare it yourself; this creates the same layout:
 
 ```sh
-git -C "$FLINK_SOURCE_REPO" worktree add -b backport/<FLINK-KEY>-<version> \
-  ~/flink-backport-workspaces/tasks/<FLINK-KEY>/<version> "$upstream/<branch>"
+bash <skill dir>/scripts/prepare.sh <FLINK-KEY> <branch>
 ```
+
+Work only in these paths. Never create, move, or remove a worktree, a `backport/*` branch, or a Maven repository yourself, and never build in another location: the cleanup only knows what `prepare.sh` created. If `prepare.sh` fails, for example because another run uses the worktree, leave the cell unchanged and report the error.
 
 Before pushing anything, check for an earlier attempt:
 
@@ -84,16 +85,7 @@ Keep the original commit messages. Add no other trailers. Resolve only mechanica
 
 Use JDK 11 for `release-1.x` and JDK 17 for other branches. Find them under `/usr/lib/jvm/` on Linux. On macOS use `/usr/libexec/java_home -v <version>` or `$(brew --prefix openjdk@<version>)/libexec/openjdk.jdk/Contents/Home`. Replace `<modules>` with the changed Maven modules, comma-separated, and `<tests>` with the test classes the fix changes or covers.
 
-Build against a private local Maven repository, `<repo>` = `~/flink-backport-workspaces/tasks/<FLINK-KEY>/<version>.m2`. Never install into the shared `~/.m2`: other backports of the same branch install the same `X.Y-SNAPSHOT` artifacts there and overwrite each other. Create `<repo>` once per worktree as a hard-link copy of `~/.m2/repository`, which costs almost no disk. Delete the branch's Flink snapshots from it, so that only what you build is used, and replace the metadata files with real copies, because Maven may rewrite them in place and would change the shared repository through the hard link:
-
-```sh
-cp -al ~/.m2/repository <repo>
-find <repo>/org/apache/flink -type d -name '<X.Y>-SNAPSHOT' -prune -exec rm -rf {} +
-find <repo> -type f \( -name 'maven-metadata*' -o -name '_remote.repositories' -o -name '*.lastUpdated' -o -name 'resolver-status.properties' \) \
-  -exec sh -c 'for f; do cp -p "$f" "$f.new" && mv "$f.new" "$f"; done' sh {} +
-```
-
-`<X.Y>-SNAPSHOT` is the version in the worktree's root `pom.xml`, such as `1.20-SNAPSHOT`. If `<repo>` is left over from an earlier run, delete it and create it again. If `~/.m2/repository` does not exist, create `<repo>` as an empty directory instead; if hard links fail across file systems, copy without `-l`.
+Build against the version's private Maven repository, `<repo>` below. Never install into the shared `~/.m2`: other backports of the same branch install the same `X.Y-SNAPSHOT` artifacts there and overwrite each other. `prepare.sh` already removed the branch's Flink snapshots from `<repo>`, so only what you build is used.
 
 Install the modules once, then run the tests without `-am` as often as needed:
 
@@ -189,10 +181,4 @@ bash <skill dir>/scripts/tracker.sh update <FLINK-KEY> <version> '{"state":"pr_o
 
 Update the tracker as soon as each version is decided, not at the end. A crash then loses at most one version, and a rerun continues from `state.md`.
 
-When every version is done, remove your worktrees to free disk space. Leave the private Maven repositories; the scheduler deletes them. Everything needed is on the fork, and review fixes can start from there. Keep `state.md`.
-
-```sh
-git -C "$FLINK_SOURCE_REPO" worktree remove --force ~/flink-backport-workspaces/tasks/<FLINK-KEY>/<version>
-```
-
-Remove a worktree only after confirming `git log @{u}..` shows nothing unpushed, or that the version ended without a pull request. Delete the local branch of a version that ended without one.
+Push everything a pull request needs before you finish. Leave the worktrees, branches, and Maven repositories; `cleanup.sh` removes them. Keep `state.md`.
