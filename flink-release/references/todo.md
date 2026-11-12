@@ -12,8 +12,8 @@ Each document answers one question, so no fact is kept twice:
 | --- | --- | --- |
 | `1-pre-rc-todo.md` | Discovery through scope freeze | Blocking items only: Wait, Uncertain, and issues that only need closing, classified with [scope triage](scope.md) |
 | `1-pre-rc-optional.md` | Discovery through scope freeze | Non-blocking items, open for community volunteers |
-| `2-ci-gate-todo.md` | CI baseline, after the freeze and before tagging | Per branch, the release commit's PR/Azure build, the latest Nightly, and every non-green job, per [CI triage](ci-triage.md) |
-| `3-rc-build-todo.md` | RC build | Build prerequisites from the [dependency checks](dependencies.md): signing key, JDK, publishing credentials, wheel build path, worktree at the frozen SHA |
+| `2-ci-gate-todo.md` | CI baseline, after the freeze and before tagging | Per branch, the release commit's push CI, the latest Nightly, and every non-green job, per [CI triage](ci-triage.md) |
+| `3-rc-build-todo.md` | RC build | This round's instance of the [RC creation checklist](rc-creation.md): per version, the release commit, concrete paths, and each step's status and evidence, plus the credential checks |
 
 Create a document when its stage becomes current. List only that stage's blockers; do not chase later-stage prerequisites such as a GPG key, a JDK, or credentials while scope is open, beyond a non-blocking notice for slow requests such as a PyPI quota increase. Start each document with its data time, the target versions and branches, and, for the scope documents, the deadline and last scan time.
 
@@ -40,8 +40,8 @@ Replace `<x.y.z>` with the target version. Keep only items that apply to this pa
 - [ ] Frozen scope recorded; evidence: branch HEAD SHA this freeze covers.
 
 ## Stage 3 · CI baseline
-- [ ] Release commit's PR/Azure build `succeeded`; evidence: flinkbot CI report + Azure build URL.
-- [ ] Latest Nightly before tagging green; evidence: run URL + commit SHA (only the last run needs to be green).
+- [ ] Push CI on the release commit (the branch HEAD at build time) green; evidence: run URL + `headSha`.
+- [ ] Latest branch Nightly recorded; evidence: run URL + commit SHA.
 - [ ] Every non-green job triaged as flaky / real regression / environment; evidence: [CI triage](ci-triage.md) row per job in `2-ci-gate-todo.md`.
 
 ## Stage 4 · RC build
@@ -68,5 +68,5 @@ The six stages map onto the workflow as: Stage 1 = Discovery + Discussion, Stage
 Check each gate before crossing the boundary; a failed gate is a hard stop.
 
 1. **Scope freeze → RC build.** Proceed only when every unresolved issue with this version's Fix Version has an evidenced disposition (resolved, moved to the next patch version, or Fix Version removed, per [scope triage](scope.md)), `1-pre-rc-todo.md` has no open row for this version, and the frozen scope is recorded; otherwise stay in Stage 2.
-2. **CI baseline → RC tag.** Create the tag only when the release commit's PR/Azure build is `succeeded` and the latest Nightly before tagging is green. Do not require a sustained all-green window; proceeding despite a red window is an exception the release manager must record, with its reason, in `state.md`/`TODO.md`.
+2. **CI baseline → RC tag.** The release commit is the maintenance branch's latest HEAD at build time, so commits merged after a tentative freeze are included. Create the tag only when push CI on that commit is green and every non-green job of the latest Nightly is triaged. Do not re-run Nightly for commits merged after the freeze, and do not require a sustained all-green window.
 3. **Verify → VOTE.** Send `[VOTE]` only after `verify-flink-release` passes for the exact candidate to be voted; otherwise stay in Stage 4/5 and rebuild a numbered new RC.

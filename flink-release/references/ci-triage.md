@@ -1,6 +1,6 @@
 # CI failure triage
 
-Use this when a branch CI job fails during Discovery, Preparation, or the CI-baseline gate. Classify every non-green job and record it in `2-ci-gate-todo.md` before ticking the CI-baseline items in `TODO.md`; the gate compares against the release commit's build, not against a sustained all-green window.
+Use this when a branch CI job fails during Discovery, Preparation, or the CI-baseline gate. Classify every non-green job and record it in `2-ci-gate-todo.md` before ticking the CI-baseline items in `TODO.md`; the gate compares against the release commit's push CI and the latest Nightly, as the [CI-baseline gate](todo.md#stage-gates) defines, not against a sustained all-green window.
 
 ## Three kinds of CI
 

@@ -24,6 +24,8 @@ timeout 30 git merge-base --is-ancestor <commit> <apache-remote>/release-<x.y> &
 
 When the fix is merged elsewhere and only a backport is missing, hand it to the `flink-backport` skill or open the backport PR yourself before asking anyone.
 
+A fix already on a target branch whose Jira issue lists the next patch version instead of the unreleased version being built is mislabeled: set its Fix Version to the version being released without asking the release manager.
+
 ## Classify
 
 Classify each candidate by its impact on users and the progress of its fix:
@@ -32,7 +34,7 @@ Classify each candidate by its impact on users and the progress of its fix:
 - **Uncertain**: the impact may be severe but the fix is not ready: no PR, a stalled PR, an undecided approach, an unmet prerequisite, a backport only the original author can judge, or an unconfirmed problem.
 - **Non-blocking**: test instability, CI, documentation, logging, Improvement, or a performance-only problem. Advance these as far as possible and welcome community volunteers; move any still unresolved at the freeze to the next patch version. An issue reopened because its test is still flaky belongs here; do not ask to split it or change someone else's issue status.
 
-Issues whose fix is complete and only need closing are tracked with the blocking items. The release manager confirms every final classification before the scope freeze.
+Issues whose fix is complete and only need closing are tracked with the blocking items. The release manager confirms every final classification before the scope freeze. Once the release manager says the backports are done, scope is closed: do not propose further backports or include/exclude options.
 
 Before moving any candidate to the next patch version, read its Fix Version history. If it has already been moved across releases at least twice without substantive progress, remove the target Fix Version instead of moving it again, and post the long-deferred comment below so later release managers need not handle it again.
 
@@ -48,7 +50,7 @@ The deadline for all items is the planned RC cut date. Post one comment per Jira
 - **Wait**: when the deadline passes unmet, the release manager decides whether to keep waiting or move it.
 - **Uncertain**: without a reply by the deadline, move it; if the owner says they will fix it, wait.
 
-Posting comments and changing Fix Versions are external writes: show the drafted comments and changes and obtain approval first.
+Posting comments and moving or removing Fix Versions are external writes: show the drafted comments and changes and obtain approval first. Correcting a mislabeled Fix Version needs no approval.
 
 ```text
 Wait:          [~<user>] Could you please get the backport for <versions> merged when you have time? We expect to cut the RC around <date>.
