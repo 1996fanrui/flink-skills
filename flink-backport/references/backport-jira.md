@@ -162,7 +162,7 @@ The people behind the original pull request have the most context, so ask them t
 Then record it:
 
 ```sh
-bash <skill dir>/scripts/tracker.sh update <FLINK-KEY> <version> '{"state":"pr_open","pr":{"pr_number":<number>,"author":"<login>","pr_source":"platform","pr_state":"open","merged_at":null,"commits":[]}}'
+bash <skill dir>/scripts/tracker.sh update <FLINK-KEY> <version> '{"state":"pr_open","pr":{"pr_number":<number>,"author":"<login>","pr_source":"platform","pr_state":"open"}}'
 ```
 
 ## 8. Finish

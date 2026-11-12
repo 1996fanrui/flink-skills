@@ -54,9 +54,9 @@ List the gaps that wait for review:
 bash <skill dir>/scripts/tracker.sh list 100 pr_open
 ```
 
-For each cell in state `pr_open`, read each open pull request with `gh pr view <number> -R apache/flink --json state,mergedAt,mergeCommit,author`. Then update the cell as [the API reference](references/api.md) describes:
+For each cell in state `pr_open`, read each open pull request with `gh pr view <number> -R apache/flink --json state,author`. Then update the cell as [the API reference](references/api.md) describes:
 
-- Merged: `merged`, with the pull request in state `merged`, its `merged_at`, and its commit.
+- Merged: `merged`, with the pull request in state `merged`. The server reads the merge time and commits from GitHub.
 - Closed without merge: `needs_human`, with a note giving the pull request number and the reason from its last comments.
 - Still open: nothing to do.
 
