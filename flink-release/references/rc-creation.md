@@ -19,11 +19,11 @@ Before running, read the target branch's `tools/releasing/` scripts: their envir
 | 1 | Preconditions | RM terminal: `export GPG_TTY=$(tty); echo test \| gpg --clearsign`. Agent: `echo test \| gpg --batch --pinentry-mode error --clearsign >/dev/null`; each RC row of [permissions and credentials](#permissions-and-credentials); `df -h <wt>` | RM types the passphrase; agent checks | GPG passphrase | any | Local | Agent check exits 0; the cache lasts 8 h, so repeat before a later batch of signing steps |
 | 2 | Select the release commit | `git -C <wt> fetch <apache> release-<x.y>`; `git -C <wt> checkout --detach <apache>/release-<x.y>`; `gh run list -R apache/flink --workflow ci.yml --branch release-<x.y> --event push --limit 3 --json headSha,status,conclusion,url`; `git ls-remote <apache> 'release-<v>-rc*'` and the same for `<fork>`; `curl -sS --max-time 30 <atr>/api/release/get/flink/<v>` | Agent | Read only | `<wt>`, `<apache>` | Local | HEAD equals `<apache>/release-<x.y>`; its push CI run has the same `headSha` and `success`; clean `git status --porcelain`; no existing RC branch or tag for `<v>-rc<N>`; the ATR release exists with `.release.phase` `release_candidate_draft` and `.release.download_path_suffix` `flink-<v>` ([ATR setup](#setup)) |
 | 3 | Create the release branch | `cd <wt>/tools && JAVA_HOME=<jdk> MVN=<wt>/mvnw NEW_VERSION=<v> RELEASE_CANDIDATE=<N> releasing/create_release_branch.sh` | Agent | None | `<wt>/tools`; local branch `release-<v>-rc<N>` in the shared Git directory | Local; undo with `git checkout --detach <commit> && git branch -D release-<v>-rc<N>` | Commit `Commit for release <v>` on the release commit; `git show --stat HEAD` covers the POMs (the root POM also carries japicmp), `docs/config.toml`, `pyflink/version.py`, and on 2.3+ `docs/static/generated/*.yml`; `git grep -l -- '-SNAPSHOT' -- '*pom.xml' docs/static/generated` lists only files that also list it at the previous release tag (`flink-contrib` is outside the reactor) |
-| 4 | Sign the tag locally | `git -C <wt> -c user.signingkey=<fpr> tag -s release-<v>-rc<N> -m "release-<v>-rc<N>"` | Agent | GPG cache | `<wt>` | Local until step 11; undo with `git tag -d` | `git tag -v release-<v>-rc<N>` shows `<fpr>`; the tag's commit equals step 3's commit |
-| 5 | Start the Python wheel build | `git -C <wt> push <fork> refs/heads/release-<v>-rc<N>:release-<v>-rc<N>`; `gh workflow run nightly.yml -R <fork-repo> --ref release-<v>-rc<N>` ([5](#5-and-8-python-wheels)) | Agent | Push to the fork; fork Actions enabled | `<wt>`, `<fork>` | Public in the fork; delete the fork branch after the vote | Run ID recorded; its `headSha` equals the RC commit |
+| 4 | Sign the tag locally | `git -C <wt> -c user.signingkey=<fpr> tag -s release-<v>-rc<N> -m "release-<v>-rc<N>"` | Agent | GPG cache | `<wt>` | Local until step 11; undo with `git tag -d` | `git verify-tag refs/tags/release-<v>-rc<N>` shows `<fpr>`; `git rev-parse refs/tags/release-<v>-rc<N>^{commit}` equals step 3's commit. The local branch and tag share one name, so always spell the tag `refs/tags/release-<v>-rc<N>` |
+| 5 | Start the Python wheel build | `git -C <wt> push <fork> refs/heads/release-<v>-rc<N>:release-<v>-rc<N>`; `gh workflow run nightly.yml -R <fork-repo> --ref release-<v>-rc<N>`; without fork Actions, run step 11 first and dispatch on `apache/flink` against the pushed tag ([5](#5-and-8-python-wheels)) | Agent | Push to the fork and fork Actions enabled, or committer access to `apache/flink` | `<wt>`, `<fork>` | Public in the fork; delete the fork branch after the vote | Run ID recorded; its `headSha` equals the RC commit |
 | 6 | Source release | `cd <wt>/tools && RELEASE_VERSION=<v> releasing/create_source_release.sh` | Agent | GPG cache | `<wt>/tools/releasing/release/` | Local; delete the directory to undo | `flink-<v>-src.tgz` with `.asc` and `.sha512`; `sha512sum -c`, `gpg --verify`; `verify-flink-release/scripts/check_source_archive.sh` passes |
 | 7 | Stage Maven artifacts and close the staging repository | `cd <wt>/tools && JAVA_HOME=<jdk> MVN=<wt>/mvnw releasing/deploy_staging_jars.sh`; then close by REST ([7](#7-nexus-staging)) | Agent | Nexus user token in `~/.m2/settings.xml`; GPG cache | `<wt>`, `~/.m2` | Staging repository visible on repository.apache.org; undo by dropping it, also when the candidate is replaced (step 13) | Exactly one open repository from this deploy, containing `org/apache/flink/flink-core/<v>/`; after close, `type` is `closed` and no close rule failed; record its URL `https://repository.apache.org/content/repositories/orgapacheflink-<id>/` |
-| 8 | Download the wheels | Wait for both `Build Python Wheels on ...` jobs, then download into `flink-python/dist` ([8](#5-and-8-python-wheels)) | Agent | Fork read | `<rc>/wheels`, `<wt>/flink-python/dist` | Local | 12 files matching `apache_flink-<v>-*.whl`; record run URL and artifact names |
+| 8 | Download the wheels | Wait for both `Build Python Wheels on ...` jobs, then download into `flink-python/dist` ([8](#5-and-8-python-wheels)) | Agent | Read access to `<wheel-repo>` | `<rc>/wheels`, `<wt>/flink-python/dist` | Local | 12 files matching `apache_flink-<v>-*.whl`; record run URL and artifact names |
 | 9 | Binary release | `cd <wt>/tools && JAVA_HOME=<jdk> MVN=<wt>/mvnw RELEASE_VERSION=<v> releasing/create_binary_release.sh` | Agent | GPG cache | `<wt>/tools/releasing/release/` | Local | `flink-<v>-bin-scala_2.12.tgz` and `python/` with the sdists, 12 wheels (plus the libraries wheel on 2.x), each with `.asc` and `.sha512`; `sha512sum -c` and `gpg --verify` pass for every file |
 | 10 | Upload to ATR and pass its checks | `rsync` the release output into the ATR release, record the RC commit, and read the checks ([10](#10-atr-upload-and-checks)) | Agent | ATR SSH key and `$JWT` | `<wt>/tools/releasing/release/`; ATR release `flink/<v>` | Public download URLs; a later upload replaces the files as a new revision | The revision's path listing matches the local inventory; zero `blocker` checks; every `concern` and `exception` reviewed; `<rev>` recorded |
 | 11 | Push the RC tag | `git -C <wt> push <apache> refs/tags/release-<v>-rc<N>` | Agent | Committer push to `apache/flink` | `<wt>`, `<apache>` | Public; delete only when the RC is cancelled ([vote](vote.md)) | `git ls-remote <apache> 'refs/tags/release-<v>-rc<N>*'` peels to the RC commit |
@@ -37,13 +37,13 @@ Record each step's result and evidence link in the round's `3-rc-build-todo.md` 
 
 ### 5 and 8: Python wheels
 
-The branch's `nightly.yml` holds the wheel jobs; dispatching it in the fork also runs that workflow's test jobs, which do not gate the RC.
+The branch's `nightly.yml` holds the wheel jobs; dispatching it also runs that workflow's test jobs, which do not gate the RC. `<wheel-repo>` is `<fork-repo>`, or `apache/flink` when the fork's Actions are unavailable: then push the RC tag (step 11) before this step and dispatch with `gh workflow run nightly.yml -R apache/flink --ref refs/tags/release-<v>-rc<N>`.
 
 ```bash
-timeout 30 gh run list -R <fork-repo> --workflow nightly.yml --branch release-<v>-rc<N> --limit 1 --json databaseId,headSha,status
-timeout 30 gh run view <run-id> -R <fork-repo> --json jobs \
+timeout 30 gh run list -R <wheel-repo> --workflow nightly.yml --branch release-<v>-rc<N> --limit 1 --json databaseId,headSha,status
+timeout 30 gh run view <run-id> -R <wheel-repo> --json jobs \
   --jq '.jobs[] | select(.name | startswith("Build Python Wheels")) | [.name, .status, .conclusion] | @tsv'
-timeout 600 gh run download <run-id> -R <fork-repo> -p 'wheel_*' -D <rc>/wheels
+timeout 600 gh run download <run-id> -R <wheel-repo> -p 'wheel_*' -D <rc>/wheels
 mkdir -p <wt>/flink-python/dist
 find <rc>/wheels -name 'apache_flink-<v>-*.whl' -exec cp {} <wt>/flink-python/dist/ \;
 ls <wt>/flink-python/dist/*.whl | wc -l   # must be 12
@@ -79,14 +79,22 @@ timeout 30 curl -sS --max-time 30 -X POST -H "Authorization: Bearer $JWT" -H 'Co
 timeout 30 curl -sS --max-time 30 <atr>/api/release/get/flink/<v> | jq -r .release.latest_revision_number    # <rev>
 timeout 30 curl -sS --max-time 30 "<atr>/api/release/paths/flink/<v>/<rev>?limit=1000" | jq -r '.count, .rel_paths[]'
 timeout 30 curl -sS --max-time 30 <atr>/api/checks/ongoing/flink/<v>/<rev> | jq .ongoing                       # repeat until 0
-timeout 60 curl -sS --max-time 60 <atr>/api/checks/list/flink/<v>/<rev> \
-  | jq -r '.checks[] | select(.status | IN("blocker", "concern", "exception")) | [.status, .checker, .primary_rel_path, .member_rel_path, .message] | @tsv'
+total=$(timeout 60 curl -sS --max-time 60 "<atr>/api/checks/list/flink/<v>/<rev>?limit=1" | jq .count)
+for o in $(seq 0 1000 $((total - 1))); do
+  timeout 60 curl -sS --max-time 60 "<atr>/api/checks/list/flink/<v>/<rev>?offset=$o&limit=1000" | jq -c '.checks[]'
+done > <rc>/atr-checks.jsonl
+wc -l < <rc>/atr-checks.jsonl                                                                          # must equal $total
+jq -r '[.status, .checker] | @tsv' <rc>/atr-checks.jsonl | sort | uniq -c
+jq -r 'select(.status | IN("blocker", "concern", "exception")) | [.status, .checker, .primary_rel_path, .member_rel_path, .message] | @tsv' <rc>/atr-checks.jsonl
 ```
 
-The path listing must equal `find . -type f | sed 's|^\./||' | sort` run in the release output directory, with `count` equal to the number of listed paths. A `blocker` cannot be ignored and stops the vote from starting: fix its cause and rebuild under `<N>+1`. Review each `concern` and `exception` and record the reviewed checker names for `concerns_noted` at [vote start](vote.md). Known Flink results:
+`checks/list` returns at most 1000 rows per request, and a Flink RC produces about 16,500, so page with `offset` and `limit`; `count` is the total.
 
-- The `apache_flink` PyFlink sdist, and its wheels, have lacked a NOTICE file since 1.13 (FLINK-41467). ATR classifies an sdist as a source archive and requires a root NOTICE, so this is a blocker until the release commit contains the fix.
-- Many RAT license-header concerns are expected, because Flink's RAT exclusions live in the root POM; compare each against those exclusions.
+The path listing must equal `find . -type f | sed 's|^\./||' | sort` run in the release output directory, with `count` equal to the number of listed paths. A `blocker` cannot be ignored and stops the vote from starting: fix its cause and rebuild under `<N>+1`. Review each `concern` and `exception`; concerns do not block, but the vote must acknowledge each reviewed checker name in `concerns_noted` at [vote start](vote.md). The first Flink run (1.20.6-rc1) gave:
+
+- One blocker from `license.files`: the `apache_flink` PyFlink sdist, and its wheels, have lacked a NOTICE file since 1.13 (FLINK-41467). ATR classifies an sdist as a source archive and requires a root NOTICE, so the vote cannot start until the release commit contains the fix.
+- About 380 concerns, because Flink's RAT exclusions live in the root POM, which ATR does not read: about 234 from `license.headers`, including Cython-generated `*_fast.c` files, and about 146 from `rat.check`, mostly "Unknown license", with 4 "Unapproved" where bundled license texts are misread as GPL. Compare each against the POM's exclusions and the bundled licenses.
+- Three suggestions for the missing SBOM.
 
 ## Directories and repositories
 
@@ -116,7 +124,7 @@ Record the concrete paths and remote names in the workspace's `workspace.md`, no
 | ATR account, SSH key, and token | Steps 2, 10; vote; finalization | [ATR setup](#setup) | `GET <atr>/api/user/info` with `$JWT` returns the RM's ID; `GET <atr>/api/ssh-keys/list/<asf-id>` lists the local public key; `ssh-keygen -F '[releases.apache.org]:2222'` finds the host key; an invalid token returns 401 |
 | ATR release per version | Steps 2, 10 | [ATR setup](#setup) | Step 2's check |
 | Push to `apache/flink` | Step 11 | ASF committer with linked GitHub account and SSH key | `gh api repos/apache/flink --jq .permissions.push` is `true` |
-| Fork with Actions | Steps 5, 8 | RM's fork; enable Actions in the fork's web UI if disabled | `gh api repos/<fork-repo>/actions/permissions --jq .enabled` is `true` and `gh api repos/<fork-repo>/actions/workflows/nightly.yml --jq .state` is `active` |
+| Fork with Actions | Steps 5, 8 | RM's fork; enable Actions in the fork's web UI if disabled; otherwise use the `apache/flink` alternative in [step 5](#5-and-8-python-wheels), covered by the `apache/flink` push row | `gh api repos/<fork-repo>/actions/permissions --jq .enabled` is `true` and `gh api repos/<fork-repo>/actions/workflows/nightly.yml --jq .state` is `active` |
 | flink-web fork | Step 12 | RM's `flink-web` fork | `gh api repos/<web-fork-repo> --jq .permissions.push` is `true` |
 | PyPI maintainer and API token | Finalization only | An existing owner adds the RM's own PyPI account as Maintainer of `apache-flink` and `apache-flink-libraries`; the RM creates an API token. Request early | The RM sees both projects under "Your projects" |
 | PyPI quota | Before step 9 | Request an increase in a public pypi/support issue if needed; approval can take days | Used size: `curl -s https://pypi.org/pypi/<project>/json \| jq '[.releases[][].size] \| add'`; limit: the latest public pypi/support quota issue for that project; remaining space must exceed this round's `python/` size per project. No shared-account login is needed |
@@ -145,7 +153,9 @@ Apache Trusted Releases (ATR, `<atr>`) carries each candidate from upload throug
 Once, the RM logs in to `<atr>` with their Apache account and MFA, then:
 
 - creates a personal access token at `<atr>/tokens` (valid 180 days) and saves it in a mode-600 file `<pat-file>`, whose path the agent records in `workspace.md`;
-- adds the build host's SSH public key at `<atr>/keys/ssh/add`, the only place keys can be added. The agent first adds ATR's host key with `ssh-keyscan -p 2222 releases.apache.org >> ~/.ssh/known_hosts`.
+- adds the build host's SSH public key at `<atr>/keys/ssh/add`, the only place keys can be added.
+
+Before the first `rsync`, the agent adds ATR's host key: `ssh-keyscan -p 2222 releases.apache.org > <scan-file>`, prints its fingerprint with `ssh-keygen -lf <scan-file>`, records the fingerprint in `workspace.md`, and appends the file to `~/.ssh/known_hosts`. On a host without IPv6 connectivity to releases.apache.org, add `-4` to every `ssh-keyscan`, `curl`, and `ssh` call to ATR (`rsync -e 'ssh -4 -p 2222'`), and record that in `workspace.md`.
 
 Each round, before step 2, the RM creates every version's release at `<atr>/start/flink` with version `<v>` and download path suffix `flink-<v>`, not expedited. An `rsync` to a missing release creates it automatically but cannot set the suffix or archive options.
 
@@ -157,7 +167,7 @@ JWT=$(timeout 30 curl -sS --max-time 30 -X POST -H 'Content-Type: application/js
 timeout 30 curl -sS --max-time 30 -H "Authorization: Bearer $JWT" <atr>/api/user/info
 ```
 
-A JWT lasts 30 minutes, and one PAT creates at most 10 per hour: reuse a JWT within its lifetime. Never print the PAT or JWT.
+A JWT lasts 30 minutes, and `jwt/create` is rate limited (at most 10 per PAT per hour, then HTTP 429): save the JWT in a mode-600 file outside the workspace and reuse it until it expires, instead of creating one per call. Never print the PAT or JWT.
 
 ## Several versions in one round
 
