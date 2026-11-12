@@ -30,11 +30,12 @@ Rules for every agent in this workflow:
       <minor-version>/         # One worktree per Jira and version
 ```
 
-`config.env` holds two shell assignments:
+`config.env` holds three shell assignments:
 
 | Name | Meaning |
 | --- | --- |
 | `FLINK_BACKPORT_API_TOKEN` | Tracker bearer token. Ask the requester if it is missing |
+| `FLINK_JIRA_TOKEN` | Apache Jira personal access token, used to link pull requests on the Jira. Ask the requester if it is missing |
 | `FLINK_SOURCE_REPO` | Local Flink clone that worktrees are created from. Find it by its `apache/flink` remote if it is missing |
 
 Load the settings in every new shell. `env.sh` also finds the pull request author and the git remotes, and fails if one is missing:

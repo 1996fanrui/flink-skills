@@ -106,7 +106,7 @@ Open a pull request only when every command passes and the log shows a `Tests ru
 git push -u "$fork" "backport/<FLINK-KEY>-<version>"
 ```
 
-Title: exactly the title of the original pull request. Add no `[BP-x.y]` or other prefix: the `[<FLINK-KEY>]` must stay at the start so that the pull request links to the Jira automatically.
+Title: exactly the title of the original pull request. Add no `[BP-x.y]` or other prefix: the ASF GitHub bot links a pull request to the Jira only when its title starts with `[<FLINK-KEY>]` at the moment it is opened. Pull requests opened as `[BP-x.y][<FLINK-KEY>] ...` are never linked; one opened as `[<FLINK-KEY>] ...` stays linked even if renamed later. The link step below is the safety net, not a substitute for the title.
 
 Compare each cherry-picked commit with its original:
 
@@ -160,6 +160,19 @@ gh api -X POST repos/apache/flink/pulls/<number>/requested_reviewers -f 'reviewe
 ```
 
 The original author and the original merger have the most context, so ask them first: request each one in a separate call, and skip `$owner` and bots. Use the REST call because `gh pr edit` fails on older `gh` versions with a classic Projects deprecation error. A rejected request for a reviewer without repository access is fine, because the `cc` line still notifies them. Add no labels and no comments beyond this.
+
+Make sure the pull request is linked on the Jira, since a missing link is not visible from GitHub. Read the Jira's remote links; when the pull request URL is missing, add it in the bot's format. The `globalId` is the one the bot uses, so a later bot run updates this link instead of adding a duplicate. Then read back and confirm the URL is listed exactly once:
+
+```sh
+links=https://issues.apache.org/jira/rest/api/2/issue/<FLINK-KEY>/remotelink
+url=https://github.com/apache/flink/pull/<number>
+curl -4 -sS --fail --max-time 30 "$links" | jq -e --arg u "$url" 'any(.[]; .object.url == $u)' >/dev/null ||
+  jq -n --arg u "$url" --arg t "GitHub Pull Request #<number>" \
+      '{globalId: ("github=" + $u), object: {url: $u, title: $t, icon: {url16x16: "https://github.com/favicon.ico"}}}' |
+    curl -4 -sS --fail-with-body --max-time 30 -X POST -H 'Content-Type: application/json' \
+      --config <(printf 'header = "Authorization: Bearer %s"\n' "$FLINK_JIRA_TOKEN") -d @- "$links"
+curl -4 -sS --fail --max-time 30 "$links" | jq -e --arg u "$url" '[.[] | select(.object.url == $u)] | length == 1'
+```
 
 Then record it:
 
