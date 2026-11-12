@@ -47,7 +47,7 @@ Replace `<x.y.z>` with the target version. Keep only items that apply to this pa
 ## Stage 4 · RC build
 - [ ] `3-rc-build-todo.md` has no open row for this version.
 - [ ] Tag `release-<x.y.z>-rc<N>` signed and pushed; evidence: tag URL + fingerprint.
-- [ ] Source/binary artifacts, ASC/SHA512, Nexus staging, Python wheels built; evidence: staging URLs + hashes.
+- [ ] Source/binary artifacts, ASC/SHA512, Nexus staging, Python wheels built and uploaded to ATR with zero blocker checks; evidence: staging URL, ATR revision, hashes.
 - [ ] Website PR proposed; evidence: PR URL.
 
 ## Stage 5 · VOTE
@@ -56,7 +56,7 @@ Replace `<x.y.z>` with the target version. Keep only items that apply to this pa
 - [ ] Vote passed (≥3 binding PMC +1, more positive than negative); evidence: tally + links.
 
 ## Stage 6 · Publish and close-out
-- [ ] Approved artifacts published and read back; evidence: PyPI/Maven/SVN/dist URLs + tag.
+- [ ] Approved artifacts published and read back; evidence: PyPI/Maven/dist/release URLs + tag.
 - [ ] Announcements sent; evidence: mail archive URLs.
 - [ ] Cleanup and follow-up done; evidence: items + links.
 ```
