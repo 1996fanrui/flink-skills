@@ -84,21 +84,41 @@ Keep the original commit messages. Add no other trailers. Resolve only mechanica
 
 Use JDK 11 for `release-1.x` and JDK 17 for other branches. Find them under `/usr/lib/jvm/` on Linux. On macOS use `/usr/libexec/java_home -v <version>` or `$(brew --prefix openjdk@<version>)/libexec/openjdk.jdk/Contents/Home`. Replace `<modules>` with the changed Maven modules, comma-separated, and `<tests>` with the test classes the fix changes or covers.
 
-The first run on a new worktree takes several minutes; later runs reuse its output.
+Build against a private local Maven repository, `<repo>` = `~/flink-backport-workspaces/tasks/<FLINK-KEY>/<version>.m2`. Never install into the shared `~/.m2`: other backports of the same branch install the same `X.Y-SNAPSHOT` artifacts there and overwrite each other. Create `<repo>` once per worktree as a hard-link copy of `~/.m2/repository`, which costs almost no disk. Delete the branch's Flink snapshots from it, so that only what you build is used, and replace the metadata files with real copies, because Maven may rewrite them in place and would change the shared repository through the hard link:
+
+```sh
+cp -al ~/.m2/repository <repo>
+find <repo>/org/apache/flink -type d -name '<X.Y>-SNAPSHOT' -prune -exec rm -rf {} +
+find <repo> -type f \( -name 'maven-metadata*' -o -name '_remote.repositories' -o -name '*.lastUpdated' -o -name 'resolver-status.properties' \) \
+  -exec sh -c 'for f; do cp -p "$f" "$f.new" && mv "$f.new" "$f"; done' sh {} +
+```
+
+`<X.Y>-SNAPSHOT` is the version in the worktree's root `pom.xml`, such as `1.20-SNAPSHOT`. If `<repo>` is left over from an earlier run, delete it and create it again. If `~/.m2/repository` does not exist, create `<repo>` as an empty directory instead; if hard links fail across file systems, copy without `-l`.
+
+Install the modules once, then run the tests without `-am` as often as needed:
 
 ```sh
 export JAVA_HOME=<JDK home>
-./mvnw -pl <modules> -am -Pskip-webui-build -Dtest='<tests>' -Dsurefire.failIfNoSpecifiedTests=false package
-./mvnw -q -pl <modules> spotless:check checkstyle:check
+./mvnw install -DskipTests -Dfast -Pskip-webui-build -pl <modules> -am -Dmaven.repo.local=<repo>
+./mvnw -pl <modules> -Dtest='<tests>' -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.repo.local=<repo> test
+./mvnw -q -pl <modules> spotless:check checkstyle:check -Dmaven.repo.local=<repo>
 ```
 
-Use `package`, not `test`: integration tests that start a MiniCluster need the packaged RPC system. Do not run `clean` between runs.
+The install builds every upstream module and can take about ten minutes. Never add `-am` to a test run: it rebuilds about a hundred modules every round, 15 minutes or more each. Without it the test run compiles only `<modules>` and takes the rest from `<repo>`, including the packaged RPC system that MiniCluster tests need. Do not run `clean` between runs.
+
+`flink-yarn-tests` needs its own test command. With `-Dtest` and a lifecycle phase, its integration tests run in the `test` phase, before their test programs are copied, and fail with `StreamingWordCount.jar not present`. Run its `integration-tests` execution directly instead:
+
+```sh
+./mvnw -pl flink-yarn-tests surefire:test@integration-tests -Dtest='<tests>' -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.repo.local=<repo>
+```
+
+This goal compiles nothing, so after any code change, such as the reverted-fix run below, first repeat the install with `-pl <modules>` and without `-am`, where `<modules>` includes `flink-yarn-tests`.
 
 On macOS, `./mvnw` may fail with a false `Failed to validate Maven distribution SHA-256` error. If so, use an installed Maven of the version in `.mvn/wrapper/maven-wrapper.properties`.
 
 For a flaky-test fix, repeat the test command at least five times, unless the fix disables that test. When the fix changes main code and adds a regression test, also confirm that the test fails with the main-code change reverted, then restore it. If it still passes, the test proves nothing about this branch: set `needs_human`.
 
-Open a pull request only when every command passes and the log shows a `Tests run:` line for the fix's own tests. A skip is expected only when the backported commits cause it, for example a test they disable with `@Ignore` or `@Disabled`, or a variant skipped by an assumption they add: name those skips under Notes. Every other test of the fix must run and pass. `BUILD SUCCESS` alone proves nothing: modules under `flink-end-to-end-tests` run their tests only with `-Prun-end-to-end-tests` in the `verify` phase, and YARN integration tests need `verify` too, because their programs are prepared after `package`. If verification fails, find the cause. A failure the same way without your commits is unrelated: mention it in the pull request. Any other failure you cannot explain and fix within two attempts means `needs_human`, with the command, the failure, and what you tried.
+Open a pull request only when every command passes and the log shows a `Tests run:` line for the fix's own tests. A skip is expected only when the backported commits cause it, for example a test they disable with `@Ignore` or `@Disabled`, or a variant skipped by an assumption they add: name those skips under Notes. Every other test of the fix must run and pass. `BUILD SUCCESS` alone proves nothing: modules under `flink-end-to-end-tests`, for example, run their tests only with `-Prun-end-to-end-tests` in the `verify` phase. If verification fails, find the cause. A failure the same way without your commits is unrelated: mention it in the pull request. Any other failure you cannot explain and fix within two attempts means `needs_human`, with the command, the failure, and what you tried.
 
 ## 7. Open the pull request
 
@@ -169,7 +189,7 @@ bash <skill dir>/scripts/tracker.sh update <FLINK-KEY> <version> '{"state":"pr_o
 
 Update the tracker as soon as each version is decided, not at the end. A crash then loses at most one version, and a rerun continues from `state.md`.
 
-When every version is done, remove your worktrees to free disk space. Everything needed is on the fork, and review fixes can start from there. Keep `state.md`.
+When every version is done, remove your worktrees to free disk space. Leave the private Maven repositories; the scheduler deletes them. Everything needed is on the fork, and review fixes can start from there. Keep `state.md`.
 
 ```sh
 git -C "$FLINK_SOURCE_REPO" worktree remove --force ~/flink-backport-workspaces/tasks/<FLINK-KEY>/<version>

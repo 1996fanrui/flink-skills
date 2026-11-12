@@ -28,7 +28,10 @@ Rules for every agent in this workflow:
       task.json                # The Jira as claimed from the tracker
       state.md                 # Facts and progress, see the sub-agent guide
       <minor-version>/         # One worktree per Jira and version
+      <minor-version>.m2/      # Its private Maven repository, see the sub-agent guide
 ```
+
+Everything under `tasks/` belongs to runs of this skill. Sub-agents remove their worktrees when they finish, and the coordinator deletes `tasks/<FLINK-KEY>/` once the Jira is done. The unattended scheduler removes every worktree under `tasks/` and every local `backport/*` branch before and after each run, and before each run deletes the private Maven repositories created more than a day ago. A worktree for manual work, such as rerunning a verification by hand, goes outside `tasks/` on a branch not named `backport/*`, with its private Maven repository next to it.
 
 `config.env` holds two shell assignments:
 
