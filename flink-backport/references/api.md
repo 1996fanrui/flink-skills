@@ -21,7 +21,7 @@ The body has `state`, and optionally `note` and `pr`. Omitting `note` keeps the 
 | Target `state` | Required |
 | --- | --- |
 | `pr_open` | `pr` with `pr_state` `open` |
-| `merged` | `pr` with `pr_state` `merged` and `merged_at`, or a `note` naming the commit |
+| `merged` | `pr` with `pr_state` `merged`, or a `note` naming the commit |
 | `not_needed` | `note` with the reason |
 | `needs_human` | `note` with the reason and the decision needed |
 
@@ -32,13 +32,11 @@ The body has `state`, and optionally `note` and `pr`. Omitting `note` keeps the 
   "pr_number": 12345,
   "author": "github-login",
   "pr_source": "platform",
-  "pr_state": "open",
-  "merged_at": null,
-  "commits": []
+  "pr_state": "open"
 }
 ```
 
-`pr_source` is `platform` for a pull request this workflow opened and `external` for anyone else's. `commits` lists the SHAs on the target branch; keep it empty until the pull request merges.
+`pr_source` is `platform` for a pull request this workflow opened and `external` for anyone else's. The server reads a merged pull request's merge time and commits from GitHub; a `pr` that sends `merged_at` or `commits` is rejected with 422.
 
 The server checks every transition, and repeating the current state is allowed, so a retry is safe.
 
@@ -46,5 +44,6 @@ The server checks every transition, and repeating the current state is allowed, 
 | --- | --- | --- |
 | 401 | Bad token | Stop and tell the requester |
 | 404 | Unknown Jira or version | Stop and report it |
-| 409 | Illegal transition | Reread the cell. If someone else moved it, respect that state |
-| 422 | Missing evidence | Fix the request |
+| 409 | Illegal transition, or the reported pull request is not merged on GitHub or merged into another branch | Reread the cell and the pull request. If someone else moved the cell, respect that state |
+| 422 | Missing evidence or unknown field | Fix the request |
+| 502 | The update was stored, but recording the merge failed | Retry the same update; it completes the merge |
