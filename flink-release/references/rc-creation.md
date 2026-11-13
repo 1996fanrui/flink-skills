@@ -133,7 +133,7 @@ ls "$out"/<yyyy>/<mm>/<dd>/apache-flink-<v>-release-announcement/index.html
 rm -rf "$out"
 ```
 
-Push `release-<v>` to `<web-fork>`; open the PR only after the release manager confirms the [release notes](release-notes.md#release-manager-review). Use the title of past patch PRs, `Add Flink <v> release`, and a body file that names the RC tag under vote, lists the three changed files, states that `<date>` is a placeholder to be set to the actual announcement date before merging, and asks not to merge before the vote passes and the release is published:
+Push `release-<v>` to `<web-fork>`; open the PR only after the release manager confirms the [release notes](release-notes.md#release-manager-review). Use the title of past patch PRs, `Add Flink <v> release`, and a body file that names the RC tag under vote, lists each changed `docs/` file, states that `<date>` is a placeholder to be set to the actual announcement date before merging, and asks not to merge before the vote passes and the release is published:
 
 ```bash
 timeout 60 gh pr create -R apache/flink-web --base asf-site --head <web-fork-owner>:release-<v> --title "Add Flink <v> release" --body-file <body-file>
