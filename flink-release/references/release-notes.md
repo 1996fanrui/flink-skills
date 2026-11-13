@@ -1,6 +1,6 @@
 # Release notes
 
-This page is the standard for a patch release's user-facing release notes in the flink-web announcement post. Curate after the scope freeze, and have the release manager confirm the result before [RC creation step 12](rc-creation.md#steps) opens the flink-web PR.
+This page is the standard for a patch release's user-facing release notes in the flink-web announcement post. Curate after the scope freeze, and have the release manager confirm the result before [RC creation step 11](rc-creation.md#steps) opens the flink-web PR.
 
 ## Input
 

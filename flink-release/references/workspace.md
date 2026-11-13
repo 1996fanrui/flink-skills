@@ -40,7 +40,7 @@ Use a verified existing repository for discovery and CI triage only; release bui
 
 Every Git tree under `releases/<x.y.z>/` is a standalone clone with its own `.git` directory; never create one with `git worktree`. Flink's `git-commit-id-plugin` 4.0.2 cannot read a linked worktree's objects, and with `failOnNoGitDirectory` and `failOnUnableToExtractRepoInfo` set to `false` it fails silently, so every jar ships `git.commit.id=${git.commit.id}` and the runtime reports `Rev:DeadD0d0` (1.20.6-rc2). [RC creation](rc-creation.md#steps) steps 7 and 9 therefore check the commit embedded in the built jars; any value other than the RC commit fails the candidate.
 
-- Flink: `timeout 1800 git clone --filter=blob:none --single-branch --branch release-<x.y> https://github.com/apache/flink.git releases/<x.y.z>/flink` (about 170 MB), then detach HEAD at the recorded maintenance-branch SHA and add the `<fork>` remote.
-- flink-web: only when website work becomes current, as in [RC creation step 12](rc-creation.md#12-website-pr).
+- Flink: `timeout 1800 git clone --filter=blob:none --single-branch --branch release-<x.y> https://github.com/apache/flink.git releases/<x.y.z>/flink` (about 170 MB), then detach HEAD at the recorded maintenance-branch SHA.
+- flink-web: only when website work becomes current, as in [RC creation step 11](rc-creation.md#11-website-pr).
 
 Before reusing an existing tree, confirm its Git source, version, branch, commit, cleanliness, and that `test -d <tree>/.git` passes. A tree whose `.git` is a file is a linked worktree: preserve its local changes and release state, then replace it with a clone; do not delete an uninspected directory.

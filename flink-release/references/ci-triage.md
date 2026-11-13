@@ -1,6 +1,6 @@
 # CI failure triage
 
-Use this when a branch CI job fails during Discovery, Preparation, or the CI-baseline gate. Classify every non-green job and record it in `2-ci-gate-todo.md` before ticking the CI-baseline items in `TODO.md`; the gate compares against the release commit's push CI and the latest Nightly, as the [CI-baseline gate](todo.md#stage-gates) defines, not against a sustained all-green window.
+Use this when a branch CI job fails during Discovery, Preparation, or the CI-baseline gate. Classify every non-green job and record it in `2-ci-gate-todo.md` before ticking the CI-baseline items in `TODO.md`; the gate compares against the release commit's push CI and the RC tag's Nightly, as the [CI-baseline gate](todo.md#stage-gates) defines, not against a sustained all-green window.
 
 ## Three kinds of CI
 
@@ -41,12 +41,12 @@ Do not classify from a red icon or a Maven module name alone; read the log.
 
 ## Classify
 
-- **Flaky** — the same job or test passes on an immediate re-run of the same commit, or the failure is an intermittent timing/race error (e.g. executor terminated, timeout) unrelated to the diff under test. Evidence: two runs of the same commit, one failing and one green, with the flaky job/test named.
+- **Flaky** — the same job or test passes on an immediate re-run of the same commit, or the failure is an intermittent timing/race error (e.g. executor terminated, timeout) unrelated to the diff under test. Evidence: a Jira issue tracking that flaky test with a matching failure, or two runs of the same commit, one failing and one green, with the flaky job/test named.
 - **Real regression** — the failure reproduces on re-run and traces to a specific commit or PR on the target branch; the error is deterministic and matches changed code. Evidence: the introducing commit/PR and the reproduced failing log.
 - **Environment issue** — the failure is infrastructure rather than a test assertion: worker lost, Maven/CI process OOM-killed, disk/network/registry errors, or a job-level failure hitting unrelated modules. Evidence: the infra error line and the affected jobs.
 
 ## Act
 
-- **Flaky** — re-run once or twice; if green, record the run IDs and mark non-blocking. If it keeps failing, reclassify as a real regression.
+- **Flaky** — a known flaky test, tracked in Jira with a matching failure (for example FLINK-40099, the YARN Kerberos keytab log check), is non-blocking: cite the issue; no re-run is needed. Otherwise, when the release manager asks, re-run only the failed jobs through the CI platform after the whole run has completed (`timeout 30 gh run rerun <run-id> -R apache/flink --failed`; GitHub rejects a re-run of an in-progress run); never re-dispatch the workflow or trigger CI by a bot comment. If green, record the run IDs and mark non-blocking; if it keeps failing, reclassify as a real regression.
 - **Real regression** — stop; locate the introducing commit/PR, then fix or revert on the branch, or move the issue out of scope. Do not freeze scope or start a vote until resolved; a regression on an RC's release commit cancels that RC, which is rebuilt under the next RC number.
-- **Environment issue** — re-run; if it persists, open or reference an Infra issue and record it. It blocks the CI-baseline gate only while it prevents a green run on the frozen commit.
+- **Environment issue** — re-run the failed jobs as for a flaky failure; if it persists, open or reference an Infra issue and record it. It blocks the CI-baseline gate only while it prevents a green run on the frozen commit.
