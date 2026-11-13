@@ -21,6 +21,7 @@ The root has this layout. Create a directory only when its stage needs it:
       TODO.md                    # Stage progress for this version, see todo.md
       flink/                     # Standalone Flink clone for this version
       flink-web/                 # Standalone flink-web clone, only when needed
+      mail-<type>[-rc<N>].txt    # Outward mail files, see SKILL.md#outward-mail
       rcN/                       # Artifacts and evidence for this candidate
 ```
 
