@@ -45,7 +45,7 @@ Patch releases are mostly Bug. Omit the Improvement section when it has no items
 The post has one intro and one list:
 
 - **Intro**: one or two sentences giving how many issues the release fixes and at most 5 key fixes, chosen by user impact, such as security, data-correctness, and regression fixes and behavior changes. Name each key fix with a short user-facing phrase and its linked `FLINK-<n>` key. This is the only highlight; never write a bare list of keys.
-- **List**: every kept issue appears exactly once under `## Bug` or `## Improvement`, sorted by key within a section. Each entry is the linked key and one user-readable sentence; reword a jargon Jira summary. For an issue with a nonempty Release Note field, the sentence states the new behavior.
+- **List**: every kept issue appears exactly once under `## Bug` or `## Improvement`, sorted by key within a section. Each entry is the linked key and one user-readable sentence without a trailing period; reword a jargon Jira summary. The sentence states the new behavior for an issue with a nonempty Release Note field, and for a fix that takes effect only through a new option, where it names the option and its default instead of presenting the problem as fixed.
 - **Links**: follow the convention of the 1.20.5 and 2.2.1 posts, the only use of past posts here: each entry's key links to `https://issues.apache.org/jira/browse/FLINK-<n>`, and the intro links the full Jira release-notes link from [Input](#input) as `[JIRA](...)`.
 - Verify every claim beyond the Jira summary, such as a configuration option, API scope, or SQL example, against the target maintenance branch and its tests; a master commit or accepted FLIP alone is insufficient.
 
