@@ -41,21 +41,27 @@ Keep one line per check that the group's section in [checks](checks.md) requires
 - FAILs: <none | one line each: check — evidence — affected artifacts — reproduction>
 - Recommendation: <start the vote | cancel and re-spin as rc<N+1> | +1 | -1 | hold until ...>
 
-## 1. Signatures, checksums, tag, and ATR checks
-- [x] Inventory complete — listing `count` <n> equals the paths; <k> platform wheels, <libraries wheel>
-- [x] Checksums and signatures — `check_rc_artifacts.sh` exit 0, <n> files
-- [x] Signer — fingerprint <fpr> in KEYS and the RC record; <algorithm, bits>
+## 1. Tag
 - [x] Tag — `git verify-tag` good; peels to <sha>
+- [x] Signer — fingerprint <fpr> in KEYS and the RC record; <algorithm, bits>
+
+## 2. Source archive
 - [x] Source archive — `check_source_archive.sh` exit 0; equals the tag's releasable source: <diff result>
 - [x] Source LICENSE and NOTICE — <evidence>
+
+## 3. Full source build
+## 4. Maven staging
+## 5. Wheels
+## 6. Binary distribution
+## 7. Python packages
+## 8. PyFlink installation and small jobs
+## 9. Local cluster smoke test
+
+## 10. ATR revision
+- [x] Inventory complete — listing `count` <n> equals the paths; <k> platform wheels, <libraries wheel>
+- [x] Same files as checked — SHA512 of every file equals the copy groups 2 to 9 checked (pre-vote)
+- [x] Checksums and signatures — `check_rc_artifacts.sh` exit 0, <n> files, all signed with <fpr>
 - [x] ATR checks — 0 blocker; <c> concerns, <e> exceptions reviewed
 
-## 2. Binary distribution against <old>
-## 3. Source and Python packages against <old>
-## 4. Maven staging against <old> on Maven Central
-## 5. PyFlink installation and small jobs
-## 6. Local cluster smoke test
-## 7. Embedded version and commit ID
-## 8. Changes, release notes, CI, and website
-## 9. Full source build
+## 11. Changes, release notes, CI, and website
 ```

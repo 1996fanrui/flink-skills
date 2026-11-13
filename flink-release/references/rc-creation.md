@@ -1,6 +1,6 @@
 # RC creation checklist
 
-This is the fixed checklist for building one release candidate. For each release round, instantiate it in `3-rc-build-todo.md` ([progress documents](todo.md)): one block per version with its concrete paths, release commit, RC number, and a status per step. Before step 1, show the release manager that instance and wait for an explicit go; then run it in order without asking again, stopping only when a step's check fails. The agent runs every command. The release manager only types the GPG passphrase and performs actions that need their web login (see [permissions and credentials](#permissions-and-credentials) and [ATR integration](#atr-integration)).
+This is the fixed checklist for building one release candidate. For each release round, instantiate it in `3-rc-build-todo.md` ([progress documents](todo.md)): one block per version with its concrete paths, release commit, RC number, and a status per step. Before step 1, show the release manager that instance and wait for an explicit go; then run it without asking again, in step order except for the overlaps in [parallel execution](#parallel-execution), stopping only when a step's check fails. The agent runs every command. The release manager only types the GPG passphrase and performs actions that need their web login (see [permissions and credentials](#permissions-and-credentials) and [ATR integration](#atr-integration)).
 
 Before running, read the target branch's `tools/releasing/` scripts: their environment variables, invocation directory, and rewritten version files differ across maintenance branches, and older guide examples are not the script contract. Differences observed for 1.20.6, 2.2.2, and 2.3.1:
 
@@ -27,7 +27,7 @@ Before running, read the target branch's `tools/releasing/` scripts: their envir
 | 9 | Binary release | `cd <clone>/tools && JAVA_HOME=<jdk> MVN=<clone>/mvnw RELEASE_VERSION=<v> releasing/create_binary_release.sh` | Agent | GPG cache | `<clone>/tools/releasing/release/` | Local | `flink-<v>-bin-scala_2.12.tgz` and `python/` with the sdists, 12 wheels (plus the libraries wheel on 2.x), each with `.asc` and `.sha512`; `sha512sum -c` and `gpg --verify` pass for every file; `verify-flink-release/scripts/check_python_license_files.sh <clone>/tools/releasing/release/python` passes for every sdist and wheel; `tar -xOzf flink-<v>-bin-scala_2.12.tgz flink-<v>/lib/flink-dist-<v>.jar > <rc>/flink-dist.jar && unzip -p <rc>/flink-dist.jar .flink-runtime.version.properties` shows `git.commit.id=<rc-commit>`; delete `<rc>/flink-dist.jar` afterwards |
 | 10 | Upload to ATR and pass its checks | `rsync` the release output into the ATR release, record the RC commit, and read the checks ([10](#10-atr-upload-and-checks)) | Agent | ATR SSH key and `$JWT` | `<clone>/tools/releasing/release/`; ATR release `flink/<v>` | Public download URLs; a later upload replaces the files as a new revision | The revision's path listing matches the local inventory; zero `blocker` checks; every `concern` and `exception` reviewed; `<rev>` recorded |
 | 11 | Website PR | Commit the announcement post with the confirmed [release notes](release-notes.md) and the download data, build, push to `<web-fork>`, then `gh pr create -R apache/flink-web` ([11](#11-website-pr)) | Agent | Push to the flink-web fork | `<web-clone>`, `<web-fork>` | Public PR; do not merge before finalization | PR URL recorded; links name `<v>` and the Jira release-notes version ID; the build check passes |
-| 12 | Verify the RC | Invoke `verify-flink-release` in pre-vote mode with version, RC, tag commit, ATR release and revision `<rev>`, staging URL, wheel run URL, website PR, and `<rc>` as its report directory | Agent | Read only | Verifier's own temporary directory; its [verification report](todo.md) in `<rc>` | Read only | The report shows overall `PASS` for this exact RC before `[VOTE]`; on `FAIL`, take every FAIL from the one verification pass, fix them all, and rebuild under the number that [RC numbering](#rc-numbering) gives |
+| 12 | Verify the RC | Right after step 5, invoke `verify-flink-release` in pre-vote mode with version, RC, tag commit, and `<rc>` as its report directory; hand it each later input as its step completes ([parallel execution](#parallel-execution)) | Agent | Read only | Verifier's own temporary directory; its [verification report](todo.md) in `<rc>` | Read only | The report shows overall `PASS` for this exact RC before `[VOTE]`; on `FAIL`, take every FAIL from the one verification pass, fix them all, and rebuild under the number that [RC numbering](#rc-numbering) gives |
 | 13 | Clean build outputs | After step 12 passes: `git -C <clone> clean -ndX` to review, then `-fdX`; remove `<rc>/wheels` and the `~/.m2/repository/org/apache/flink/*/<v>` directories installed by step 7 | Agent | None | `<clone>`, `~/.m2` | Local, irreversible; keep `<rc>/logs` | `df -h` recorded; `<clone>` clean |
 
 Record each step's result and evidence link in the round's `3-rc-build-todo.md` as it completes, and the RC identity (tag, commit, fingerprint, staging repository, ATR revision, wheel run, website PR) in `state.md`.
@@ -208,7 +208,27 @@ timeout 30 curl -sS --max-time 30 -H "Authorization: Bearer $JWT" <atr>/api/user
 
 A JWT lasts 30 minutes, and `jwt/create` is rate limited (at most 10 per PAT per hour, then HTTP 429): save the JWT in a mode-600 file outside the workspace and reuse it until it expires, instead of creating one per call. Never print the PAT or JWT.
 
-## Several versions in one round
+## Parallel execution
+
+Steps run in numbered order except for these overlaps within one version:
+
+- **Tag push and Nightly with the build:** push the tag and start its Nightly (step 5) alongside the source release (step 6) and the Nexus deploy (step 7). The Nightly runs for hours, and its wheels are needed only at step 8.
+- **Verification with the later build steps:** each `verify-flink-release` check group starts as soon as its own inputs exist, in parallel with the remaining build steps; do not wait for the whole build or the ATR upload. Hand the verifier each input when its step completes:
+
+  | After step | Input | Check groups that start |
+  | --- | --- | --- |
+  | 5, tag pushed | Tag and commit | Tag; changes, release notes, and CI |
+  | 6, source release created | Source archive | Full source build first, as the long pole; then the source archive |
+  | 7, staging repository closed | Staging repository URL | Nexus diff and the staged commit-ID check |
+  | 8, wheels downloaded | Wheels and their Nightly run URL | Wheels |
+  | 9, binary release created | Binary archive and `python/` | Binary diff, Python packages diff, PyFlink installation, cluster smoke test |
+  | 10, ATR upload done | ATR release and `<rev>` | ATR revision and its checks |
+  | 11, website PR opened | PR URL | Website |
+
+  The verifier assembles the single report once every group has finished, as its `references/report.md` describes; step 12's result is that report.
+- **Website PR and vote draft with the build:** the website branch needs only the confirmed release notes and the PR only the RC tag's name, so run step 11 during steps 6 to 10. Draft the `[VOTE]` mail during the build too, filling in each item as its step records it ([vote](vote.md)).
+
+### Across versions
 
 Only the Nexus deploy (step 7) and the binary build (step 9) run one version at a time. For every later version, create the RC branch and signed tag, push the tag, and start its Nightly (steps 1–5) right away, in parallel with the earlier version's Nexus deploy, so its wheels are ready when its turn comes. Steps 7 and 9 are serial because:
 

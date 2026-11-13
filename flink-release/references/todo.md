@@ -62,7 +62,7 @@ Replace `<x.y.z>` with the target version. Keep only items that apply to this pa
 - [ ] Cleanup and follow-up done; evidence: items + links.
 ```
 
-The six stages map onto the workflow as: Stage 1 = Discovery + Discussion, Stages 2–3 = Preparation, Stage 4 = RC creation (Stage 3's push CI on the release commit runs in parallel with it), Stage 5 = RC verification + Vote and result, Stage 6 = Finalization + Follow-up.
+The six stages map onto the workflow as: Stage 1 = Discovery + Discussion, Stages 2–3 = Preparation, Stage 4 = RC creation (Stage 3's push CI on the release commit and the RC verification run in parallel with it), Stage 5 = the RC verification result + Vote and result, Stage 6 = Finalization + Follow-up.
 
 ## Stage gates
 
