@@ -2,7 +2,7 @@
 
 Each document answers one question, so no fact is kept twice:
 
-- `releases/<x.y.z>/state.md` — what is true for this version: stage, exact version/RC/commit, evidence links, actions, results, blockers, and next action. Overwrite old conclusions as they change; reread it on resume.
+- `releases/<x.y.z>/state.md` — what is true for this version: stage, exact version/RC/commit, evidence links, actions, results, release manager decisions, blockers, and next action. Overwrite old conclusions as they change; reread it on resume.
 - `releases/<x.y.z>/TODO.md` — how far this version has progressed: one checkbox per stage item, each tick naming its evidence. Recompute it from `state.md` and the stage documents at each stage close; it carries no standalone facts. When they disagree, the evidence wins.
 - Stage documents at the workspace root — what remains to be done in the current stage, by whom, across all versions released together. Delete them when every version in that release round is complete; its durable facts live in each `state.md`.
 
@@ -35,7 +35,7 @@ Replace `<x.y.z>` with the target version. Keep only items that apply to this pa
 - [ ] Community consensus on scope reached; evidence: reply URLs or recorded consensus.
 
 ## Stage 2 · Scope freeze
-- [ ] Every unresolved Jira issue with this Fix Version resolved, moved to the next patch version, or its Fix Version removed; evidence: issue key + disposition link for each.
+- [ ] Every unresolved Jira issue with this Fix Version [settled](scope.md#settle-unresolved-issues): resolved, moved to the next patch version, its Fix Version removed, or kept with the release manager's decision recorded in `state.md`; evidence: issue key + disposition link for each, or that `state.md` entry.
 - [ ] Release notes curated per [release notes](release-notes.md) and confirmed by the release manager; evidence: Jira release-notes URL + confirmation.
 - [ ] Frozen scope recorded; evidence: branch HEAD SHA this freeze covers.
 
@@ -67,6 +67,6 @@ The six stages map onto the workflow as: Stage 1 = Discovery + Discussion, Stage
 
 Check each gate before crossing the boundary; a failed gate is a hard stop.
 
-1. **Scope freeze → RC build.** Proceed only when every unresolved issue with this version's Fix Version has an evidenced disposition (resolved, moved to the next patch version, Fix Version removed, or fix on the release commit and reported to the release manager, per [scope triage](scope.md#move-unresolved-issues)), `1-pre-rc-todo.md` has no open row for this version, and the frozen scope is recorded; otherwise stay in Stage 2.
+1. **Scope freeze → RC build.** Proceed only when every unresolved issue with this version's Fix Version is [settled](scope.md#settle-unresolved-issues) with evidence, `1-pre-rc-todo.md` has no open row for this version, and the frozen scope is recorded; otherwise stay in Stage 2.
 2. **CI baseline → VOTE.** The release commit is the maintenance branch's latest HEAD at build time, so commits merged after a tentative freeze are included. Do not wait for its push CI before building: a full run takes hours, so build, tag, stage, and upload the RC while it runs. Send `[VOTE]` only when push CI on that commit is green and every non-green job of the latest Nightly is triaged; triage a red push CI run with [CI triage](ci-triage.md), and a real regression cancels the RC, which is rebuilt under the next RC number. Do not re-run Nightly for commits merged after the freeze, and do not require a sustained all-green window.
 3. **Verify → VOTE.** Send `[VOTE]` only after `verify-flink-release` passes for the exact candidate to be voted; otherwise stay in Stage 4/5 and rebuild a numbered new RC.

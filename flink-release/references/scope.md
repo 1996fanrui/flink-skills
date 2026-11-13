@@ -32,9 +32,9 @@ Classify each candidate by its impact on users and the progress of its fix:
 
 - **Wait**: the impact is severe and a fix already exists, merged on any branch or in a ready PR; only the backport's review, merge, or missing PR remains.
 - **Uncertain**: the impact may be severe but the fix is not ready: no PR, a stalled PR, an undecided approach, an unmet prerequisite, a backport only the original author can judge, or an unconfirmed problem.
-- **Non-blocking**: test instability, CI, documentation, logging, Improvement, or a performance-only problem. Advance these as far as possible and welcome community volunteers; at the freeze, [move](#move-unresolved-issues) any still unfixed. An issue reopened because its test is still flaky belongs here; do not ask to split it or change someone else's issue status.
+- **Non-blocking**: test instability, CI, documentation, logging, Improvement, or a performance-only problem. Advance these as far as possible and welcome community volunteers; at the freeze, [settle](#settle-unresolved-issues) any still unresolved. An issue reopened because its test is still flaky belongs here.
 
-Issues whose fix is complete and only need closing are tracked with the blocking items. The release manager confirms every final classification before the scope freeze. Once the release manager says the backports are done, scope is closed: do not propose further backports or include/exclude options.
+Issues whose fix is complete and only need closing are tracked with the blocking items, unless someone else reopened or owns them; those are [never touched](#settle-unresolved-issues). The release manager confirms every final classification before the scope freeze. Once the release manager says the backports are done, scope is closed: do not propose further backports or include/exclude options.
 
 ## Contact owners
 
@@ -51,13 +51,13 @@ Uncertain:     [~<user>] Could you please confirm whether this will be fixed for
 Long-deferred: [~<user>] This has been moved across several releases without progress, so I'm removing the fix version. Please set it again once a fix is ready.
 ```
 
-## Move unresolved issues
+## Settle unresolved issues
 
-At the freeze, and again once the RC commits are fixed, recheck every issue still unresolved with a target Fix Version, per branch that Fix Version names, as in [Check whether a branch has the fix](#check-whether-a-branch-has-the-fix) against the RC commit:
+At the freeze, and again once the RC commits are fixed, recheck every issue still unresolved with a target Fix Version and not yet in that version's [recorded decision](#record-the-decision), per branch that Fix Version names, as in [Check whether a branch has the fix](#check-whether-a-branch-has-the-fix) against the RC commit:
 
 - **Not merged** (no fix commit on the RC commit and no merged PR to that branch): replace only that branch's patch version with the next patch version of the same line, using the Jira `update` operation (remove the old version, add the new one) and leaving other Fix Versions untouched. If the next version does not exist in Jira, stop and ask the release manager; do not create it.
-- **Fix on the RC commit but the issue is unresolved** (for example reopened because a test is still flaky): keep the Fix Version and report it to the release manager.
-- **Ambiguous** (a partial fix, or merged after the RC commit): keep the Fix Version and report it.
+- **Fix on the RC commit but the issue is unresolved** (reopened for a new failure, waiting on a follow-up for another branch, or simply not closed): keep the Fix Version. When someone else reopened or owns the issue, the release process never touches it: no Fix Version or status change, no closing, no comment, no request to split it.
+- **Ambiguous** (a partial fix, or merged after the RC commit): keep the Fix Version.
 
 Before moving, read the issue's Fix Version history. If it has already been moved across releases at least twice without substantive progress, remove the target Fix Version instead of moving it again, and post the long-deferred comment above so later release managers need not handle it again. Re-read the issue after each write.
 
@@ -65,3 +65,7 @@ Before moving, read the issue's Fix Version history. If it has already been move
 timeout 30 curl -sS --max-time 30 'https://issues.apache.org/jira/rest/api/2/issue/FLINK-<id>?expand=changelog&fields=key' \
   | jq -r '.changelog.histories[] | .created as $c | .items[] | select(.field == "Fix Version") | [$c[0:10], (.fromString // "-"), (.toString // "-")] | @tsv'
 ```
+
+### Record the decision
+
+Report the issues kept in the last two cases to the release manager once, as one list with each branch's fix commit. Record their decision, quoted, with that list as a single entry in each target version's `state.md`, listing only the issues carrying that version's Fix Version; replace any earlier entry rather than adding another. Every later stage, including RC rebuilds, the vote, marking the Jira version Released (whose unresolved-issue warning these issues trigger), and finalization, reads that entry and does not ask again: the recorded issues do not block. Raise only an unresolved issue missing from the entry, then update the entry with the new decision.
