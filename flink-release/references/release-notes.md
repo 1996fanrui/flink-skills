@@ -1,6 +1,6 @@
 # Release notes
 
-This page is the standard for a patch release's user-facing release notes in the flink-web announcement post. Past posts are not a reference. Curate after the scope freeze, and have the release manager confirm the result before [RC creation step 12](rc-creation.md#steps) opens the flink-web PR.
+This page is the standard for a patch release's user-facing release notes in the flink-web announcement post. Curate after the scope freeze, and have the release manager confirm the result before [RC creation step 12](rc-creation.md#steps) opens the flink-web PR.
 
 ## Input
 
@@ -42,19 +42,19 @@ Patch releases are mostly Bug. Omit the Improvement section when it has no items
 
 ## Write
 
-- Each entry's title must read well to a user on its own. Reword a jargon Jira summary in the post; keep its `FLINK-<n>` key and link.
-- Verify every claim beyond a title, such as a configuration option, API scope, or SQL example, against the target maintenance branch and its tests; a master commit or accepted FLIP alone is insufficient.
-- Add a highlights paragraph when a kept issue is a security fix, a data-correctness fix, a regression fix, or has a nonempty Release Note field: name each such issue, and state each Release Note field's text.
-- Sort entries by key within a section.
+The post has one intro and one list:
+
+- **Intro**: one or two sentences giving how many issues the release fixes and at most 5 key fixes, chosen by user impact, such as security, data-correctness, and regression fixes and behavior changes. Name each key fix with a short user-facing phrase and its linked `FLINK-<n>` key. This is the only highlight; never write a bare list of keys.
+- **List**: every kept issue appears exactly once under `## Bug` or `## Improvement`, sorted by key within a section. Each entry is the linked key and one user-readable sentence; reword a jargon Jira summary. For an issue with a nonempty Release Note field, the sentence states the new behavior.
+- **Links**: follow the convention of the 1.20.5 and 2.2.1 posts, the only use of past posts here: each entry's key links to `https://issues.apache.org/jira/browse/FLINK-<n>`, and the intro links the full Jira release-notes link from [Input](#input) as `[JIRA](...)`.
+- Verify every claim beyond the Jira summary, such as a configuration option, API scope, or SQL example, against the target maintenance branch and its tests; a master commit or accepted FLIP alone is insufficient.
 
 Skeleton of the post's introduction and `# Release Notes` section; `<count>` is the number of listed entries:
 
 ```markdown
 The Apache Flink Community is pleased to announce the <ordinal> bug fix release of the Flink <x.y> series.
 
-This release includes <count> bug fixes and improvements for Flink <x.y>. The list below excludes flaky and test-only, CI and build, documentation-only, and release-tooling changes. For a complete list of all changes see [JIRA](https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=<version-id>&projectId=12315522).
-
-<highlights paragraph, only when the Write rules require one>
+This release fixes <count> issues in Flink <x.y>, including <key fix phrase> ([FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>)) and <key fix phrase> ([FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>)). The list below excludes test-only, CI and build, documentation-only, and release-tooling changes; for a complete list of all changes see [JIRA](https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=<version-id>&projectId=12315522).
 
 We highly recommend all users upgrade to Flink <v>.
 
@@ -64,13 +64,13 @@ We highly recommend all users upgrade to Flink <v>.
 
 ## Bug
 
-- [FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>) - <user-readable title>
+- [FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>) - <one user-readable sentence>
 
-## Improvement
+## Improvement   <!-- only when it has entries -->
 
-- [FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>) - <user-readable title>
+- [FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>) - <one user-readable sentence>
 ```
 
 ## Release manager review
 
-Before opening the flink-web PR, show the release manager two lists: **kept** issues with key, Jira type, section, and displayed title (marking reworded ones), and **excluded** issues with key, Jira summary, and a one-line reason naming the exclusion rule. Open the PR only after the release manager confirms, and record the confirmation in `state.md`. If an issue gains or loses this Fix Version later, classify only that issue and confirm it the same way.
+Before opening the flink-web PR, show the release manager the intro and two lists: **kept** issues with key, Jira type, section, and displayed sentence (marking reworded ones), and **excluded** issues with key, Jira summary, and a one-line reason naming the exclusion rule. Open the PR only after the release manager confirms, and record the confirmation in `state.md`. If an issue gains or loses this Fix Version later, classify only that issue and confirm it the same way.
