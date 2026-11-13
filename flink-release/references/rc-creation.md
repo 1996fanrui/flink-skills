@@ -69,11 +69,13 @@ timeout 60 curl -sS --max-time 60 -u "$NEXUS_CRED" -H 'Accept: application/json'
   | jq -r '.data[] | select(.type == "open" and .userId == "<asf-id>") | [.repositoryId, .userAgent, .createdDate] | @tsv'
 timeout 60 curl -sS --max-time 60 -u "$NEXUS_CRED" -X POST -H 'Content-Type: application/json' "$NX/staging/profiles/<profile-id>/finish" \
   -d '{"data":{"stagedRepositoryId":"<repository-id>","description":"Apache Flink, version <v>, release candidate <N>"}}'
+timeout 60 curl -sS --max-time 60 -u "$NEXUS_CRED" -H 'Accept: application/json' "$NX/staging/repository/<repository-id>" \
+  | jq -r '[.type, .transitioning] | @tsv'                                                 # repeat until "closed  false"
 timeout 60 curl -sS --max-time 60 -u "$NEXUS_CRED" -H 'Accept: application/json' "$NX/staging/repository/<repository-id>/activity" \
   | jq -r '.[] | .name as $n | .events[] | [$n, .name] | @tsv'                           # no ruleFailed
 ```
 
-`/finish` closes and `/drop` (same body) drops a repository, per the ASF Nexus staging REST documentation. If the open list does not have exactly one entry, stop. The Nexus web UI (Staging Repositories → Close) is the equivalent manual path.
+`/finish` closes and `/drop` (same body) drops a repository, per the ASF Nexus staging REST documentation. Both return 201 and run asynchronously: a close is done when the status read shows `closed` with `transitioning` `false` (print the raw fields; jq `//` treats `false` as missing), a drop when that read returns HTTP 404. If the open list does not have exactly one entry, stop. The Nexus web UI (Staging Repositories → Close) is the equivalent manual path.
 
 ### 10: ATR upload and checks
 
