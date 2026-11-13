@@ -13,7 +13,7 @@ A third works on the fixes that those releases ship:
 
 | Stage | What the agent prepares or checks | Decision or result |
 | --- | --- | --- |
-| Workspace | Read saved local paths and release states; find existing Flink repositories and prepare isolated worktrees as needed. | Resume without repeating previously answered setup questions. |
+| Workspace | Read saved local paths and release states; find existing Flink repositories and prepare an isolated clone per version as needed. | Resume without repeating previously answered setup questions. |
 | Discovery | Determine the next patch version; fetch current branch, Jira, PR, CI, and mail evidence; give the requester checked review links and a `[DISCUSS]` draft. | An evidence-backed proposal before any community email. |
 | Discussion | Send and follow the dev@ `[DISCUSS]` thread using the discovery evidence. | Community consensus and a release manager. |
 | Preparation | After consensus, check Jira release notes, backports, compatibility, access, signing identity, build requirements, and release-related PRs. | A ready branch and resolved blockers. |

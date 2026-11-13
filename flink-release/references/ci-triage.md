@@ -15,7 +15,7 @@ timeout 30 gh run list -R apache/flink --workflow nightly.yml --branch release-<
 
 For an unscheduled branch the latest Nightly may be old; a committer can dispatch one with `timeout 30 gh workflow run nightly.yml -R apache/flink --ref release-<x.y>`, an external write that needs approval.
 
-Nightly covers more than push CI. Compare the branch's two workflows in its worktree: Nightly typically adds the branch's non-default supported JDKs, a Hadoop 3 profile, the AdaptiveScheduler profile, and Python wheel builds on Linux and macOS.
+Nightly covers more than push CI. Compare the branch's two workflows on the branch: Nightly typically adds the branch's non-default supported JDKs, a Hadoop 3 profile, the AdaptiveScheduler profile, and Python wheel builds on Linux and macOS.
 
 ```bash
 timeout 10 grep -nE 'name: "|jdk_version|PROFILE=' .github/workflows/ci.yml .github/workflows/nightly.yml
