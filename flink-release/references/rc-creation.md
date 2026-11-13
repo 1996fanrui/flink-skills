@@ -171,11 +171,11 @@ A JWT lasts 30 minutes, and `jwt/create` is rate limited (at most 10 per PAT per
 
 ## Several versions in one round
 
-Build versions one at a time, finishing a version through step 14 before starting the next. Running them concurrently on one host is unsafe:
+Only the Nexus deploy (step 7) and the binary build (step 9) run one version at a time. For every later version, create the RC branch and signed tag, push the tag, and start the Nightly wheel run (steps 1–5, plus step 11 when the wheels build on `apache/flink`) right away, in parallel with the earlier version's Nexus deploy, so its wheels are ready when its turn comes. Steps 7 and 9 are serial because:
 
 - **Nexus staging**: implicit staging groups deploys by user, IP address, and user agent, and Maven 3.8.6 sends `Apache-Maven/<version> (Java <java.version>; <os>)`, so two versions deployed with the same JDK land in one open repository. Close each version's repository before the next deploy.
 - **Maven local repository**: the worktrees share `~/.m2/repository`, and the branches' Maven 3.8.6 wrapper bundles maven-resolver 1.6.3 without the named file locks that let concurrent processes share it.
-- **Disk**: one version's release output is about 1.3 GB (2.2.1 in dist/release), plus `target/` directories and installed Maven artifacts; step 14 frees them before the next version.
+- **Disk**: one version's release output is about 1.3 GB (2.2.1 in dist/release), plus `target/` directories and installed Maven artifacts; check `df -h` before each version's step 7 and step 9, and free an earlier version with step 14 if space is short.
 
 ## Quality while building
 
