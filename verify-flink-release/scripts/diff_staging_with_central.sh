@@ -48,10 +48,12 @@ diff -u --label "Maven Central $OLD artifacts" --label "staging $V artifacts" \
     previous-artifacts staged-artifacts || status=1
 
 sidecars='\.(md5|sha1|sha256|sha512|asc)$'
-xargs -P 16 -I{} bash -c 'staging_list "{}/$V/" | sed "s|^|{}/|" || exit 255' < staged-artifacts \
-    | grep -Ev "$sidecars" | sed "s/${V//./\\.}/<v>/g" | sort > staged-files
-xargs -P 16 -I{} bash -c 'central_list "{}/$OLD/" | sed "s|^|{}/|" || exit 255' < previous-artifacts \
-    | grep -Ev "$sidecars" | sed "s/${OLD//./\\.}/<v>/g" | sort > previous-files
+# Each parallel job writes its own file: jobs sharing one pipe interleave partial lines.
+mkdir staged previous
+xargs -P 16 -I{} bash -c 'set -o pipefail; staging_list "{}/$V/" | sed "s|^|{}/|" > "staged/{}" || exit 255' < staged-artifacts
+xargs -P 16 -I{} bash -c 'set -o pipefail; central_list "{}/$OLD/" | sed "s|^|{}/|" > "previous/{}" || exit 255' < previous-artifacts
+cat staged/* | grep -Ev "$sidecars" | sed "s/${V//./\\.}/<v>/g" | sort > staged-files
+cat previous/* | grep -Ev "$sidecars" | sed "s/${OLD//./\\.}/<v>/g" | sort > previous-files
 diff -u --label "Maven Central $OLD files" --label "staging $V files" \
     previous-files staged-files || status=1
 exit "$status"
