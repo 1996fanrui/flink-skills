@@ -36,7 +36,7 @@ Replace `<x.y.z>` with the target version. Keep only items that apply to this pa
 
 ## Stage 2 · Scope freeze
 - [ ] Every unresolved Jira issue with this Fix Version resolved, moved to the next patch version, or its Fix Version removed; evidence: issue key + disposition link for each.
-- [ ] Release notes and announced changes reconciled against the branch; evidence: Jira release-notes URL.
+- [ ] Release notes curated per [release notes](release-notes.md) and confirmed by the release manager; evidence: Jira release-notes URL + confirmation.
 - [ ] Frozen scope recorded; evidence: branch HEAD SHA this freeze covers.
 
 ## Stage 3 · CI baseline
