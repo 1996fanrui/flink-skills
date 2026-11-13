@@ -4,6 +4,7 @@ Each document answers one question, so no fact is kept twice:
 
 - `releases/<x.y.z>/state.md` — what is true for this version: stage, exact version/RC/commit, evidence links, actions, results, release manager decisions, blockers, and next action. Overwrite old conclusions as they change; reread it on resume.
 - `releases/<x.y.z>/TODO.md` — how far this version has progressed: one checkbox per stage item, each tick naming its evidence. Recompute it from `state.md` and the stage documents at each stage close; it carries no standalone facts. When they disagree, the evidence wins.
+- `releases/<x.y.z>/rcN/` verification report — whether this exact candidate passed verification: `verify-flink-release` writes it into the RC's directory, one checklist per RC, and it is the only evidence for the Verify → VOTE gate.
 - Stage documents at the workspace root — what remains to be done in the current stage, by whom, across all versions released together. Delete them when every version in that release round is complete; its durable facts live in each `state.md`.
 
 ## Stage documents
@@ -51,7 +52,7 @@ Replace `<x.y.z>` with the target version. Keep only items that apply to this pa
 - [ ] Website PR proposed; evidence: PR URL.
 
 ## Stage 5 · VOTE
-- [ ] `verify-flink-release` passed on this exact RC; evidence: result + RC identity.
+- [ ] `verify-flink-release` passed on this exact RC; evidence: path of its verification report in this RC's `rcN/` directory, overall PASS.
 - [ ] `[VOTE] Apache Flink <x.y.z> release` posted; evidence: thread URL + deadline.
 - [ ] Vote passed (≥3 binding PMC +1, more positive than negative); evidence: tally + links.
 
@@ -69,4 +70,4 @@ Check each gate before crossing the boundary; a failed gate is a hard stop.
 
 1. **Scope freeze → RC build.** Proceed only when every unresolved issue with this version's Fix Version is [settled](scope.md#settle-unresolved-issues) with evidence, `1-pre-rc-todo.md` has no open row for this version, and the frozen scope is recorded; otherwise stay in Stage 2.
 2. **CI baseline → VOTE.** The release commit is chosen as [workflow step 5](../SKILL.md#workflow) requires, so commits merged after a tentative freeze are included. Do not wait for its push CI before building: a full run takes hours, so build, tag, stage, and upload the RC while it runs. Send `[VOTE]` only when push CI on that commit is green and every non-green job of the Nightly run dispatched on the RC tag in [RC creation step 5](rc-creation.md#5-and-8-python-wheels) is triaged; triage a red push CI run with [CI triage](ci-triage.md), and a real regression cancels the RC, which is rebuilt under the next RC number. Do not re-run Nightly for commits merged after the freeze, and do not require a sustained all-green window.
-3. **Verify → VOTE.** Send `[VOTE]` only after `verify-flink-release` passes for the exact candidate to be voted; otherwise stay in Stage 4/5 and rebuild a numbered new RC.
+3. **Verify → VOTE.** Send `[VOTE]` only when the verification report of the exact candidate to be voted shows overall PASS; otherwise stay in Stage 4/5 and rebuild a numbered new RC.

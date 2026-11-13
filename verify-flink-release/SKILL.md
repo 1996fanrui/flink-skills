@@ -1,6 +1,6 @@
 ---
 name: verify-flink-release
-description: Independently verify an existing Apache Flink main-project patch release candidate, including identity, artifacts, provenance, licenses, builds, and candidate quality. Use for x.y.z-rcN with z greater than zero; do not create or publish a release.
+description: Independently verify an existing Apache Flink main-project patch release candidate, including identity, artifacts, provenance, licenses, builds, and candidate quality, and write a per-RC checklist report. Use for x.y.z-rcN with z greater than zero; do not create or publish a release.
 ---
 
 # Verify a Flink patch release candidate
@@ -10,8 +10,8 @@ Verify one existing RC independently. Write any community-facing replies or draf
 1. Read the bundled Markdown [Flink verification guide](references/official/verifying-flink-release.md) and [ASF release policy](references/official/asf-release-policy.md), then compare them with current upstream rules and the target branch. If current policy cannot be checked, mark its freshness `UNKNOWN`.
 2. Identify the exact version, RC, tag commit, and candidate artifact links. Before a vote, use the release manager's RC inventory and original artifact sources; after a vote exists, also identify and check the original vote thread. Resolve ambiguous or multiple active candidates; never assume the highest RC number is valid.
 3. Consult the internal [dependency checks](references/dependencies.md) as each verification operation becomes current. Resolve available tools and read access automatically; request only evidence or access the agent cannot obtain.
-4. Run the [evidence and verification checks](references/checks.md) for this exact RC as one parallel pass: independent check groups, including diffs against the previous release, run concurrently in about 10 minutes, while the full source build runs alongside and reports separately. Resolve paths relative to this skill directory. Do not reuse a previous candidate's artifacts, votes, or verification results.
-5. Report `PASS`, `FAIL`, or `UNKNOWN` with evidence and impact, with every `FAIL` from all groups in one list. Never claim a check was performed if it was skipped. A draft for a community reply must state only work actually done in this run.
+4. Run the [evidence and verification checks](references/checks.md) for this exact RC as one parallel pass: independent check groups, including diffs against the previous release, run concurrently in about 10 minutes, while the full source build runs alongside. Resolve paths relative to this skill directory. Do not reuse a previous candidate's artifacts, votes, or verification results.
+5. Once every group, including the source build, has finished, write this RC's [verification report](references/report.md) in one pass: a checklist with one evidenced line per check, every `FAIL` in one summary list, the overall `PASS`, `FAIL`, or `UNKNOWN`, and a vote recommendation. Give the requester its path. A draft for a community reply must state only work actually done in this run.
 
 The release manager may use this preflight before a vote. A PMC voter must still perform the personal source checks required by ASF policy before casting a binding +1.
 
