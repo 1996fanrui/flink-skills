@@ -48,5 +48,5 @@ Do not classify from a red icon or a Maven module name alone; read the log.
 ## Act
 
 - **Flaky** — re-run once or twice; if green, record the run IDs and mark non-blocking. If it keeps failing, reclassify as a real regression.
-- **Real regression** — stop; locate the introducing commit/PR, then fix or revert on the branch, or move the issue out of scope. Do not freeze scope or cut an RC until resolved.
+- **Real regression** — stop; locate the introducing commit/PR, then fix or revert on the branch, or move the issue out of scope. Do not freeze scope or start a vote until resolved; a regression on an RC's release commit cancels that RC, which is rebuilt under the next RC number.
 - **Environment issue** — re-run; if it persists, open or reference an Infra issue and record it. It blocks the CI-baseline gate only while it prevents a green run on the frozen commit.
