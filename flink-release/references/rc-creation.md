@@ -43,11 +43,19 @@ The branch's `nightly.yml` holds the wheel jobs; dispatching it also runs that w
 timeout 30 gh run list -R <wheel-repo> --workflow nightly.yml --branch release-<v>-rc<N> --limit 1 --json databaseId,headSha,status
 timeout 30 gh run view <run-id> -R <wheel-repo> --json jobs \
   --jq '.jobs[] | select(.name | startswith("Build Python Wheels")) | [.name, .status, .conclusion] | @tsv'
-timeout 600 gh run download <run-id> -R <wheel-repo> -p 'wheel_*' -D <rc>/wheels
+timeout 30 gh api "repos/<wheel-repo>/actions/runs/<run-id>/artifacts?per_page=100" \
+  --jq '.artifacts[] | select(.name | startswith("wheel_")) | [.id, .name, .workflow_run.head_sha] | @tsv'
+# for each <artifact-id> <name>; head_sha must be the RC commit
+mkdir -p <rc>/wheels/<name>
+timeout 600 gh api repos/<wheel-repo>/actions/artifacts/<artifact-id>/zip > <rc>/wheels/<name>.zip
+unzip -q -d <rc>/wheels/<name> <rc>/wheels/<name>.zip && rm <rc>/wheels/<name>.zip
 mkdir -p <wt>/flink-python/dist
 find <rc>/wheels -name 'apache_flink-<v>-*.whl' -exec cp {} <wt>/flink-python/dist/ \;
 ls <wt>/flink-python/dist/*.whl | wc -l   # must be 12
+for w in <wt>/flink-python/dist/*.whl; do unzip -Z1 "$w" | grep -cE '\.dist-info/(licenses/)?(LICENSE|NOTICE)$'; done | sort | uniq -c   # 12 x 2
 ```
+
+Download by artifact ID rather than with `gh run download -p` or `-n`: gh 2.45 resolves those names by paging every artifact of the repository, which on `apache/flink` fails with HTTP 500 partway through.
 
 ### 7: Nexus staging
 
