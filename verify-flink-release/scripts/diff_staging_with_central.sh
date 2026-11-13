@@ -4,6 +4,8 @@
 # Compares the org.apache.flink artifactIds and the file names under each artifact version
 # (sidecars excluded, version replaced with <v>) between a Nexus staging repository and the
 # previous release on Maven Central. Exit 0: same; 1: differences to explain; other: error.
+# The previous release is every artifact whose <previous-x.y.z> POM descends from flink-parent,
+# so other projects sharing the groupId and version (such as Stateful Functions) are excluded.
 
 set -eo pipefail
 
@@ -37,11 +39,27 @@ export -f staging_list central_list
 
 staging_list '' | sort > staged-artifacts
 central_list '' | sed -n 's|/$||p' > central-artifacts
-# An artifact belongs to the previous release when its POM exists for that version.
+mkdir previous-poms
 xargs -P 16 -I{} bash -c '
-    code=$(curl -sS -o /dev/null --max-time 30 -w "%{http_code}" "$CENTRAL/{}/$OLD/{}-$OLD.pom")
-    case "$code" in 200) echo {} ;; 404) ;; *) echo "HTTP $code for {}" >&2; exit 255 ;; esac
-' < central-artifacts | sort > previous-artifacts
+    code=$(curl -sS -o "previous-poms/{}" --max-time 30 -w "%{http_code}" "$CENTRAL/{}/$OLD/{}-$OLD.pom")
+    case "$code" in 200) ;; 404) rm "previous-poms/{}" ;; *) echo "HTTP $code for {}" >&2; exit 255 ;; esac
+' < central-artifacts
+# Record each POM as "<artifactId> <parent artifactId>", with "-" for a parent outside org.apache.flink.
+for pom in previous-poms/*; do
+    parent=$(sed -n '/<parent>/,/<\/parent>/{p;/<\/parent>/q}' "$pom")
+    parent_artifact=-
+    if [ "$(sed -n 's|.*<groupId>\(.*\)</groupId>.*|\1|p' <<< "$parent")" = org.apache.flink ]; then
+        parent_artifact=$(sed -n 's|.*<artifactId>\(.*\)</artifactId>.*|\1|p' <<< "$parent")
+    fi
+    echo "${pom#previous-poms/} $parent_artifact"
+done > previous-parents
+# An artifact belongs to the previous release when its parent chain reaches flink-parent.
+awk '{ parent[$1] = $2 } END {
+    for (artifact in parent) {
+        for (node = artifact; node != "flink-parent" && node in parent; ) node = parent[node]
+        if (node == "flink-parent") print artifact
+    }
+}' previous-parents | sort > previous-artifacts
 
 status=0
 diff -u --label "Maven Central $OLD artifacts" --label "staging $V artifacts" \
