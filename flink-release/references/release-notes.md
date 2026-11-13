@@ -1,6 +1,6 @@
 # Release notes
 
-Release notes are for Flink users. The issues Jira lists under the Fix Version are raw input; the published list is curated from them. The official guide's [Review Release Notes in JIRA](official/creating-flink-release.md#review-release-notes-in-jira) and [website pull request](official/creating-flink-release.md#propose-a-pull-request-for-website-updates) sections are the baseline; this page sets the curation rules. Curate after the scope freeze, and have the release manager confirm the result before [RC creation step 12](rc-creation.md#steps) opens the flink-web PR.
+This page is the standard for a patch release's user-facing release notes in the flink-web announcement post. Past posts are not a reference. Curate after the scope freeze, and have the release manager confirm the result before [RC creation step 12](rc-creation.md#steps) opens the flink-web PR.
 
 ## Input
 
@@ -15,34 +15,62 @@ timeout 30 curl -sS --max-time 30 -G "$JIRA/search" \
   | jq -r '.total, (.issues[] | [.key, .fields.issuetype.name, .fields.summary, (.fields.customfield_12310192 // "")] | @tsv)'
 ```
 
-Page with `startAt` until every one of `.total` issues is read. `customfield_12310192` is the Release Note field. The Jira release-notes link, which every announcement carries, is `https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=<version-id>&projectId=12315522`.
+Page with `startAt` until every one of `.total` issues is read. `customfield_12310192` is the Release Note field. The full Jira release-notes link is `https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=<version-id>&projectId=12315522`.
 
 ## Exclude
 
 Leave out every issue that changes nothing a user runs or reads in the release:
 
-- test instability and flaky tests;
+- flaky tests and test instability;
 - test-only changes, even when their Jira type is Bug;
-- CI, build infrastructure, and build stability;
-- release tooling and release housekeeping, such as version bumps, japicmp baselines, and compatibility-test version lists;
+- CI, build infrastructure, build stability, and test-scope or build-plugin dependency upgrades;
+- release tooling and housekeeping, such as version bumps, japicmp baselines, and compatibility-test version lists;
 - documentation-only and website-only changes;
-- hotfix housekeeping, such as typos, code style, and refactoring without behavior change;
+- typos, code style, and refactoring without behavior change;
 - issues introduced after the previous release on this line and fixed before this one, which no user saw.
 
-Classify by what the change touches, not by its Jira type or title: read the linked PR's changed files when the title is ambiguous.
+Decide by what the change touches, not by its Jira type or title; read the linked PR's changed files when the title is ambiguous.
 
-## Include
+## Classify
 
-Keep user-visible bug fixes, improvements, security fixes, and dependency upgrades that change what users run, such as bundled or shaded libraries and CVE fixes; leave out test-scope and build-plugin upgrades. Each entry's title must read well to a user on its own. When a Jira summary is internal jargon, reword the displayed text in the post and keep its `FLINK-<n>` key and link. Verify every change described beyond its title, such as a feature, configuration option, API scope, completed FLIP subtask, or SQL example, against the target maintenance branch and its tests or parser; a merged master commit or accepted FLIP alone is insufficient. An issue with a nonempty Release Note field carries a compatibility or migration note: keep it and state the note in the highlights.
+Put every kept issue in exactly one of two sections, by what it means to a user, regardless of its Jira type:
 
-## Patch release post
+- **Bug**: something worked incorrectly and now works: wrong results, failures, crashes, regressions, and security fixes, including CVE-driven dependency upgrades.
+- **Improvement**: something already correct works better: performance, usability, error messages, and non-security dependency upgrades that change what users run.
 
-Copy the structure of the previous patch release post on the same line:
+Patch releases are mostly Bug. Omit the Improvement section when it has no items. An issue that fits neither section is not user-facing: exclude it.
 
-- The introduction states that the list excludes test, build, CI, and documentation-only changes and links the Jira release notes for the complete list.
-- An optional short highlights paragraph names notable fixes: security fixes, data-correctness fixes, regressions, and every Release Note field entry.
-- The list starts from Jira's HTML release notes for the version: one `<h2>` section per Jira type (Bug, Improvement, Technical Debt, and so on) holding `[FLINK-<n>] - <title>` entries. Delete excluded entries and any section left empty; do not regroup by component.
+## Write
+
+- Each entry's title must read well to a user on its own. Reword a jargon Jira summary in the post; keep its `FLINK-<n>` key and link.
+- Verify every claim beyond a title, such as a configuration option, API scope, or SQL example, against the target maintenance branch and its tests; a master commit or accepted FLIP alone is insufficient.
+- Add a highlights paragraph when a kept issue is a security fix, a data-correctness fix, a regression fix, or has a nonempty Release Note field: name each such issue, and state each Release Note field's text.
+- Sort entries by key within a section.
+
+Skeleton of the post's introduction and `# Release Notes` section; `<count>` is the number of listed entries:
+
+```markdown
+The Apache Flink Community is pleased to announce the <ordinal> bug fix release of the Flink <x.y> series.
+
+This release includes <count> bug fixes and improvements for Flink <x.y>. The list below excludes flaky and test-only, CI and build, documentation-only, and release-tooling changes. For a complete list of all changes see [JIRA](https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=<version-id>&projectId=12315522).
+
+<highlights paragraph, only when the Write rules require one>
+
+We highly recommend all users upgrade to Flink <v>.
+
+<# Release Artifacts section>
+
+# Release Notes
+
+## Bug
+
+- [FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>) - <user-readable title>
+
+## Improvement
+
+- [FLINK-<n>](https://issues.apache.org/jira/browse/FLINK-<n>) - <user-readable title>
+```
 
 ## Release manager review
 
-Before opening the flink-web PR, show the release manager two lists: **kept** issues with key, Jira type, and displayed title (marking reworded ones), and **excluded** issues with key, Jira summary, and a one-line reason naming the exclusion category. Open the PR only after the release manager confirms, and record the confirmation in `state.md`. If an issue gains or loses this Fix Version later, classify only that issue and confirm it the same way.
+Before opening the flink-web PR, show the release manager two lists: **kept** issues with key, Jira type, section, and displayed title (marking reworded ones), and **excluded** issues with key, Jira summary, and a one-line reason naming the exclusion rule. Open the PR only after the release manager confirms, and record the confirmation in `state.md`. If an issue gains or loses this Fix Version later, classify only that issue and confirm it the same way.
