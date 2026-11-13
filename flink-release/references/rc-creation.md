@@ -30,7 +30,7 @@ Before running, read the target branch's `tools/releasing/` scripts: their envir
 | 12 | Verify the RC | Right after step 5, invoke `verify-flink-release` in pre-vote mode with version, RC, tag commit, and `<rc>` as its report directory; hand it each later input as its step completes ([parallel execution](#parallel-execution)) | Agent | Read only | Verifier's own temporary directory; its [verification report](todo.md) in `<rc>` | Read only | The report shows overall `PASS` for this exact RC before `[VOTE]`; on `FAIL`, take every FAIL from the one verification pass, fix them all, and rebuild under the number that [RC numbering](#rc-numbering) gives |
 | 13 | Clean build outputs | After step 12 passes: `git -C <clone> clean -ndX` to review, then `-fdX`; remove `<rc>/wheels` and the `~/.m2/repository/org/apache/flink/*/<v>` directories installed by step 7 | Agent | None | `<clone>`, `~/.m2` | Local, irreversible; keep `<rc>/logs` | `df -h` recorded; `<clone>` clean |
 
-Record each step's result and evidence link in the round's `3-rc-build-todo.md` as it completes, and the RC identity (tag, commit, fingerprint, staging repository, ATR revision, wheel run, website PR) in `state.md`.
+Record each step's result and evidence link in the round's `3-rc-build-todo.md` as it completes, and in `state.md` the RC identity (tag, commit, fingerprint, staging repository, ATR revision, wheel run) and the website PR URL.
 
 ## Step commands
 
@@ -107,7 +107,7 @@ The path listing must equal `find . -type f | sed 's|^\./||' | sort` run in the 
 
 ### 11: Website PR
 
-The branch depends only on the confirmed release notes, so it can be prepared before the RC is built; the PR opens at this step. Clone the current site branch (about 380 MB with the Hugo theme submodule), then add the `<web-fork>` remote:
+The website branch and PR belong to `<v>`, not to an RC: they depend only on the confirmed release notes, so the branch can be prepared before the RC is built, and the PR opens at this step. The PR title and body never name an RC number or tag, so a re-spin never requires editing the PR; the RC under vote appears only in the [vote](vote.md) email. On a re-spin, step 11 reuses the open PR and changes it only when its files need a fix. Clone the current site branch (about 380 MB with the Hugo theme submodule), then add the `<web-fork>` remote:
 
 ```bash
 timeout 900 git clone --filter=blob:none --single-branch --branch asf-site https://github.com/apache/flink-web.git <web-clone>
@@ -134,7 +134,7 @@ ls "$out"/<yyyy>/<mm>/<dd>/apache-flink-<v>-release-announcement/index.html
 rm -rf "$out"
 ```
 
-Push `release-<v>` to `<web-fork>`; open the PR only after the release manager confirms the [release notes](release-notes.md#release-manager-review). Use the title of past patch PRs, `Add Flink <v> release`, and a body file that names the RC tag under vote, lists each changed `docs/` file, states that `<date>` is a placeholder to be set to the actual announcement date before merging, and asks not to merge before the vote passes and the release is published:
+Push `release-<v>` to `<web-fork>`; open the PR only after the release manager confirms the [release notes](release-notes.md#release-manager-review). Use the title of past patch PRs, `Add Flink <v> release`, and a body file that lists each changed `docs/` file, states that `<date>` is a placeholder to be set to the actual announcement date before merging, and asks not to merge before the vote passes and the release is published:
 
 ```bash
 timeout 60 gh pr create -R apache/flink-web --base asf-site --head <web-fork-owner>:release-<v> --title "Add Flink <v> release" --body-file <body-file>
@@ -228,7 +228,7 @@ Steps run in numbered order except for these overlaps within one version:
   | 11, website PR opened | PR URL | Website |
 
   The verifier assembles the single report once every group has finished, as its `references/report.md` describes; step 12's result is that report.
-- **Website PR and vote draft with the build:** the website branch needs only the confirmed release notes and the PR only the RC tag's name, so run step 11 during steps 6 to 10. Draft the `[VOTE]` mail during the build too, filling in each item as its step records it ([vote](vote.md)).
+- **Website PR and vote draft with the build:** the website branch and PR need only the confirmed release notes, so run step 11 during steps 6 to 10. Draft the `[VOTE]` mail during the build too, filling in each item as its step records it ([vote](vote.md)).
 
 ### Across versions
 
@@ -249,6 +249,6 @@ In both cases, drop every open or closed Nexus staging repository of the replace
 
 ## Quality while building
 
-- Bind one `<v>-rc<N>` to its signed tag, commit, signing fingerprint and `KEYS`, source and binary files, ASC/SHA512, Nexus staging repository, Python files under `python/`, website PR, and corresponding CI runs. Confirm each wheel traces to this RC commit and check the branch-specific platform matrix separately from any `apache-flink-libraries` universal wheel. Use a different wheel build path only if its full matrix and provenance have been verified. Record each item's origin, hash, and upload result. Check Docker publishing readiness and access now; Docker images are finalized after the official release is available, not a required RC artifact.
+- Bind one `<v>-rc<N>` to its signed tag, commit, signing fingerprint and `KEYS`, source and binary files, ASC/SHA512, Nexus staging repository, Python files under `python/`, and corresponding CI runs. Confirm each wheel traces to this RC commit and check the branch-specific platform matrix separately from any `apache-flink-libraries` universal wheel. Use a different wheel build path only if its full matrix and provenance have been verified. Record each item's origin, hash, and upload result. Check Docker publishing readiness and access now; Docker images are finalized after the official release is available, not a required RC artifact.
 - Before a replacement RC, preserve the prior RC's evidence, clear its build outputs, and restart from step 2; never derive a new RC from the old RC commit by accident.
 - Apply the installed `verify-flink-release` skill's quality checks while producing each package, CI artifact, and website PR: packaging, signing, license and notice coverage, provenance, build and runtime behavior, and version consistency. Investigate failures at their cause; do not continue with an apparently complete RC.
