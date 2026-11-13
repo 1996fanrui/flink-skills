@@ -10,7 +10,7 @@ Before running, read the target branch's `tools/releasing/` scripts: their envir
 
 ## Placeholders
 
-`<v>` target version `x.y.z`; `<x.y>` its maintenance line; `<N>` RC number; `<wt>` the version's Flink worktree; `<rc>` the candidate's evidence directory `releases/<v>/rc<N>/`; `<jdk>` the branch's release JDK home; `<apache>` and `<fork>` the remote names for `apache/flink` and the release manager's fork `<fork-repo>`; `<fpr>` the signing key fingerprint; `<asf-id>` the release manager's Apache ID; `<profile-id>` the `org.apache.flink` Nexus staging profile ID; `<atr>` `https://releases.apache.org`; `<rc-commit>` step 3's commit; `<old>` the patch version this release supersedes on its line; `<rev>` the ATR revision holding this RC; `$JWT` an ATR API token ([API access](#api-access)). Maven steps run from `<wt>/tools` with `JAVA_HOME=<jdk> MVN=<wt>/mvnw`. Tee every script's output to `<rc>/logs/<step>.log`.
+`<v>` target version `x.y.z`; `<x.y>` its maintenance line; `<N>` RC number; `<wt>` the version's Flink worktree; `<rc>` the candidate's evidence directory `releases/<v>/rc<N>/`; `<jdk>` the branch's release JDK home; `<apache>` and `<fork>` the remote names for `apache/flink` and the release manager's fork `<fork-repo>`; `<fpr>` the signing key fingerprint; `<asf-id>` the release manager's Apache ID; `<profile-id>` the `org.apache.flink` Nexus staging profile ID; `<atr>` `https://releases.apache.org`; `<rc-commit>` step 3's commit; `<old>` the patch version this release supersedes on its line; `<rev>` the ATR revision holding this RC; `$JWT` an ATR API token ([API access](#api-access)); `<web-clone>` the local flink-web clone and `<web-wt>` the version's worktree from it; `<web-apache>` and `<web-fork>` the remote names for `apache/flink-web` and the release manager's fork `<web-fork-repo>`; `<date>` the announcement date `yyyy-mm-dd`. Maven steps run from `<wt>/tools` with `JAVA_HOME=<jdk> MVN=<wt>/mvnw`. Tee every script's output to `<rc>/logs/<step>.log`.
 
 ## Steps
 
@@ -27,7 +27,7 @@ Before running, read the target branch's `tools/releasing/` scripts: their envir
 | 9 | Binary release | `cd <wt>/tools && JAVA_HOME=<jdk> MVN=<wt>/mvnw RELEASE_VERSION=<v> releasing/create_binary_release.sh` | Agent | GPG cache | `<wt>/tools/releasing/release/` | Local | `flink-<v>-bin-scala_2.12.tgz` and `python/` with the sdists, 12 wheels (plus the libraries wheel on 2.x), each with `.asc` and `.sha512`; `sha512sum -c` and `gpg --verify` pass for every file |
 | 10 | Upload to ATR and pass its checks | `rsync` the release output into the ATR release, record the RC commit, and read the checks ([10](#10-atr-upload-and-checks)) | Agent | ATR SSH key and `$JWT` | `<wt>/tools/releasing/release/`; ATR release `flink/<v>` | Public download URLs; a later upload replaces the files as a new revision | The revision's path listing matches the local inventory; zero `blocker` checks; every `concern` and `exception` reviewed; `<rev>` recorded |
 | 11 | Push the RC tag | `git -C <wt> push <apache> refs/tags/release-<v>-rc<N>` | Agent | Committer push to `apache/flink` | `<wt>`, `<apache>` | Public; delete only when the RC is cancelled ([vote](vote.md)) | `git ls-remote <apache> 'refs/tags/release-<v>-rc<N>*'` peels to the RC commit |
-| 12 | Website PR | Update `docs/data/flink.yml`, `docs/data/release_archive.yml`, and the announcement post with the confirmed [release notes](release-notes.md); push to the flink-web fork; `gh pr create -R apache/flink-web` | Agent | Push to the flink-web fork | Version's flink-web worktree | Public PR; do not merge before finalization | PR URL recorded; links name `<v>` and the Jira release-notes version ID |
+| 12 | Website PR | Commit the announcement post with the confirmed [release notes](release-notes.md) and the download data, build, push to `<web-fork>`, then `gh pr create -R apache/flink-web` ([12](#12-website-pr)) | Agent | Push to the flink-web fork | `<web-wt>`, `<web-fork>` | Public PR; do not merge before finalization | PR URL recorded; links name `<v>` and the Jira release-notes version ID; the build check passes |
 | 13 | Verify the RC | Invoke `verify-flink-release` in pre-vote mode with version, RC, tag commit, ATR release and revision `<rev>`, staging URL, wheel run URL, and website PR | Agent | Read only | Verifier's own temporary directory | Read only | `PASS` for this exact RC before `[VOTE]`; on `FAIL`, cancel and rebuild with `<N>+1`, never under `<N>` again ([RC verification](../SKILL.md#workflow)) |
 | 14 | Clean build outputs | After step 13 passes: `git -C <wt> clean -ndX` to review, then `-fdX`; remove `<rc>/wheels` and the `~/.m2/repository/org/apache/flink/*/<v>` directories installed by step 7 | Agent | None | `<wt>`, `~/.m2` | Local, irreversible; keep `<rc>/logs` | `df -h` recorded; `<wt>` clean |
 
@@ -95,6 +95,37 @@ The path listing must equal `find . -type f | sed 's|^\./||' | sort` run in the 
 - One blocker from `license.files`: the `apache_flink` PyFlink sdist, and its wheels, have lacked a NOTICE file since 1.13 (FLINK-41467). ATR classifies an sdist as a source archive and requires a root NOTICE, so the vote cannot start until the release commit contains the fix.
 - About 380 concerns, because Flink's RAT exclusions live in the root POM, which ATR does not read: about 234 from `license.headers`, including Cython-generated `*_fast.c` files, and about 146 from `rat.check`, mostly "Unknown license", with 4 "Unapproved" where bundled license texts are misread as GPL. Compare each against the POM's exclusions and the bundled licenses.
 - Three suggestions for the missing SBOM.
+
+### 12: Website PR
+
+The branch depends only on the confirmed release notes, so it can be prepared before the RC is built; the PR opens at this step. Create the worktree from the current site branch; the Hugo theme is a submodule:
+
+```bash
+timeout 120 git -C <web-clone> fetch <web-apache> asf-site
+timeout 60 git -C <web-clone> worktree add -b release-<v> <web-wt> <web-apache>/asf-site
+timeout 120 git -C <web-wt> submodule update --init --recursive
+```
+
+Change only `docs/` sources, as past patch PRs do; generated `content/` follows the publication path in [finalization](finalization.md):
+
+- `docs/content/posts/<date>-release-<v>.md`: front matter `title: "Apache Flink <v> Release Announcement"`, `date: "<date>T00:00:00.000Z"`, alias `/news/<yyyy>/<mm>/<dd>/release-<v>.html`, and the release manager under `authors`; the body follows [release notes](release-notes.md), with the `# Release Artifacts` section taken from the line's previous patch post and its version replaced.
+- `docs/data/flink.yml`: in the `<x.y>:` block, replace the previous patch version with `<v>` everywhere; keep other keys such as `release_notes_url`.
+- `docs/data/release_archive.yml`: insert `version_short: "<x.y>"`, `version_long: <v>`, `release_date: <date>` directly above the previous patch of the same line. The file is grouped by line, newest line first, and the downloads page renders it in file order.
+- `docs/config.toml`: only when `<x.y>` equals `FlinkStableShortVersion`, set `FlinkStableVersion = "<v>"`.
+
+The vote result is unknown when the branch is prepared, so `<date>` starts as an estimate; before merging, set the file name, `date`, alias, and `release_date` to the actual announcement date. Hugo skips posts dated in the future, so a post merged with a later date stays off the site until that day (the 2.3.0 post needed a follow-up fix).
+
+Build check, with the Hugo version from `REQUIRED_HUGO_VERSION` in `build.sh` (the image takes about 1 GB of disk):
+
+```bash
+out=$(mktemp -d /tmp/agent-tmp/flink-web-build.XXXXXXXX); chmod 777 "$out"
+timeout 300 docker run --rm -u "$(id -u):$(id -g)" -v <web-wt>/docs:/src -v "$out":/out jakejarvis/hugo-extended:<hugo-version> --buildFuture --destination /out
+grep -c 'flink-<v>-bin-scala_2.12.tgz' "$out"/downloads/index.html              # 1
+ls "$out"/<yyyy>/<mm>/<dd>/apache-flink-<v>-release-announcement/index.html
+rm -rf "$out"
+```
+
+Push `release-<v>` to `<web-fork>`; open the PR only after the release manager confirms the [release notes](release-notes.md#release-manager-review).
 
 ## Directories and repositories
 
