@@ -10,7 +10,7 @@ Before running, read the target branch's `tools/releasing/` scripts: their envir
 
 ## Placeholders
 
-`<v>` target version `x.y.z`; `<x.y>` its maintenance line; `<N>` RC number; `<wt>` the version's standalone Flink clone, never a linked worktree ([workspace](workspace.md#prefer-existing-repositories)); `<rc>` the candidate's evidence directory `releases/<v>/rc<N>/`; `<jdk>` the branch's release JDK home; `<apache>` and `<fork>` the remote names for `apache/flink` and the release manager's fork `<fork-repo>`; `<fpr>` the signing key fingerprint; `<asf-id>` the release manager's Apache ID; `<profile-id>` the `org.apache.flink` Nexus staging profile ID; `<atr>` `https://releases.apache.org`; `<rc-commit>` step 3's commit; `<old>` the patch version this release supersedes on its line; `<rev>` the ATR revision holding this RC; `$JWT` an ATR API token ([API access](#api-access)); `<web-clone>` the local flink-web clone and `<web-wt>` the version's worktree from it; `<web-apache>` and `<web-fork>` the remote names for `apache/flink-web` and the release manager's fork `<web-fork-repo>`; `<date>` the announcement date `yyyy-mm-dd`. Maven steps run from `<wt>/tools` with `JAVA_HOME=<jdk> MVN=<wt>/mvnw`. Tee every script's output to `<rc>/logs/<step>.log`.
+`<v>` target version `x.y.z`; `<x.y>` its maintenance line; `<N>` RC number; `<wt>` the version's standalone Flink clone, never a linked worktree ([workspace](workspace.md#prefer-existing-repositories)); `<rc>` the candidate's evidence directory `releases/<v>/rc<N>/`; `<jdk>` the branch's release JDK home; `<apache>` and `<fork>` the remote names for `apache/flink` and the release manager's fork `<fork-repo>`; `<fpr>` the signing key fingerprint; `<asf-id>` the release manager's Apache ID; `<profile-id>` the `org.apache.flink` Nexus staging profile ID; `<atr>` `https://releases.apache.org`; `<rc-commit>` step 3's commit; `<old>` the patch version this release supersedes on its line; `<rev>` the ATR revision holding this RC; `$JWT` an ATR API token ([API access](#api-access)); `<web-clone>` the local flink-web clone and `<web-wt>` the version's worktree from it; `<web-apache>` and `<web-fork>` the remote names for `apache/flink-web` and the release manager's fork `<web-fork-repo>`, owned by `<web-fork-owner>`; `<date>` the announcement date `yyyy-mm-dd`. Maven steps run from `<wt>/tools` with `JAVA_HOME=<jdk> MVN=<wt>/mvnw`. Tee every script's output to `<rc>/logs/<step>.log`.
 
 ## Steps
 
@@ -133,7 +133,11 @@ ls "$out"/<yyyy>/<mm>/<dd>/apache-flink-<v>-release-announcement/index.html
 rm -rf "$out"
 ```
 
-Push `release-<v>` to `<web-fork>`; open the PR only after the release manager confirms the [release notes](release-notes.md#release-manager-review).
+Push `release-<v>` to `<web-fork>`; open the PR only after the release manager confirms the [release notes](release-notes.md#release-manager-review). Use the title of past patch PRs, `Add Flink <v> release`, and a body file that names the RC tag under vote, lists the three changed files, states that `<date>` is a placeholder to be set to the actual announcement date before merging, and asks not to merge before the vote passes and the release is published:
+
+```bash
+timeout 60 gh pr create -R apache/flink-web --base asf-site --head <web-fork-owner>:release-<v> --title "Add Flink <v> release" --body-file <body-file>
+```
 
 ## Directories and repositories
 
