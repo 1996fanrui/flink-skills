@@ -1,6 +1,6 @@
 # Verification report and vote reply
 
-Each verification run writes one standalone Markdown report for its RC, readable without the conversation or the logs, and, when the overall result is `PASS`, the requester's own [vote reply](#vote-reply) next to it. When the caller names a per-RC directory, such as the release workspace's directory for this candidate, write `<directory>/verification.md` and `<directory>/mail-vote-reply.txt`; otherwise write `flink-<v>-rc<N>-verification.md` and `flink-<v>-rc<N>-mail-vote-reply.txt` in the current directory. A rerun on the same RC replaces both; a new RC gets its own and never inherits results.
+Each verification run writes one standalone Markdown report for its RC, readable without the conversation or the logs, and, when the recommendation is to start the vote or to vote +1, the requester's own [vote reply](#vote-reply) next to it. When the caller names a per-RC directory, such as the release workspace's directory for this candidate, write `<directory>/verification.md` and `<directory>/mail-vote-reply.txt`; otherwise write `flink-<v>-rc<N>-verification.md` and `flink-<v>-rc<N>-mail-vote-reply.txt` in the current directory. A rerun on the same RC replaces both; a new RC gets its own and never inherits results.
 
 ## Writing it
 
@@ -13,7 +13,7 @@ Each [check group](checks.md#one-parallel-pass) returns only its checkbox lines 
 | `SKIPPED` | `- [ ] SKIPPED <what was checked> — <why it was not run>` |
 | `UNKNOWN` | `- [ ] UNKNOWN <what was checked> — <why the result is indeterminate, or which evidence was inaccessible>` |
 
-Never mark a check `PASS` that was not performed in this run.
+Never mark a check `PASS` that was not performed in this run. A known defect is a `FAIL` line in every RC that has it, even when the previous release has it too or the release manager defers its fix; record that decision on the line, never as a summary note or a `PASS`.
 
 ## Overall result
 
