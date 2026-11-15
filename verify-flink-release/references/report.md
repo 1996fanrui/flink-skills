@@ -13,13 +13,13 @@ Each [check group](checks.md#one-parallel-pass) returns only its checkbox lines 
 | `SKIPPED` | `- [ ] SKIPPED <what was checked> — <why it was not run>` |
 | `UNKNOWN` | `- [ ] UNKNOWN <what was checked> — <why the result is indeterminate, or which evidence was inaccessible>` |
 
-Never mark a check `PASS` that was not performed in this run. A known defect is a `FAIL` line in every RC that has it, even when the previous release has it too or the release manager defers its fix; record that decision on the line, never as a summary note or a `PASS`.
+Never mark a check `PASS` that was not performed in this run.
 
 ## Overall result
 
 An RC identity mismatch or failure of a required hash, signature, license, or source build makes the overall result `FAIL`. If necessary checks are `SKIPPED` or `UNKNOWN`, including a source build that has not finished, the overall result is `UNKNOWN`, never `PASS`. A pre-vote result may pass without vote-email checks; perform those checks once the email exists.
 
-The summary lists every `FAIL` from all groups, including the build, each with its evidence, affected artifacts, and reproduction steps, so the release manager decides on a re-spin from the complete list and the next RC fixes every known problem. The next RC is verified from the beginning. The recommendation is, for the release manager, to start the vote or to cancel and re-spin; for a voter, the vote this run's evidence supports, which the voter casts personally ([voter independence](checks.md#voter-independence)).
+The summary lists every `FAIL` from all groups, including the build, each with its evidence, affected artifacts, and reproduction steps, so the release manager decides on a re-spin from the complete list. The next RC is verified from the beginning. The recommendation is, for the release manager, to start the vote or to cancel and re-spin; for a voter, the vote this run's evidence supports, which the voter casts personally ([voter independence](checks.md#voter-independence)).
 
 ## Vote reply
 
@@ -41,7 +41,7 @@ The body says everything a voter needs, as briefly as possible: one bullet per t
 | PyFlink install with the header's Python, Table API and DataStream jobs | 8 |
 | Website PR | 11 |
 
-Drop a bullet when one of its groups has a `FAIL` line, except the comparison bullet, which drops only that group's artifact, for example "binary" for a `FAIL` in group 6. Append `, and checked <FLINK keys>` only for the fix-specific regression checks this run performed and passed. Never list a `SKIPPED`, `UNKNOWN`, or `FAIL` check, including a `FAIL` the release manager deferred; mention no deferred finding, internal tooling such as this skill's scripts or subagents, or CI run details. It ends with `Best,` and `<name>`. Ask the requester for `<asf-id>` and `<name>` when the caller does not give them.
+Drop a bullet when one of its groups has a `FAIL` line, except the comparison bullet, which drops only that group's artifact, for example "binary" for a `FAIL` in group 6. Append `, and checked <FLINK keys>` only for the fix-specific regression checks this run performed and passed. Never list a `SKIPPED`, `UNKNOWN`, or `FAIL` check; mention no internal tooling such as this skill's scripts or subagents, or CI run details. It ends with `Best,` and `<name>`. Ask the requester for `<asf-id>` and `<name>` when the caller does not give them.
 
 ## Templates
 
