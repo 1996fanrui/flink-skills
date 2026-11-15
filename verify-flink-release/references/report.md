@@ -29,7 +29,19 @@ The vote reply is a mail file that the requester, such as the release manager ca
 - `Subject: Re: <subject>`, with the ATR vote mail's exact subject.
 - `In reply to: <link>`, the lists.apache.org link of the ATR vote mail, never a duplicate thread. Before the vote exists, take `<subject>` from the caller's `[VOTE]` mail, which ATR sends verbatim, and write `<pending>`; the caller fills in the link once the vote mail is archived.
 
-The body is short. Its first line is `+1 (binding)` when `<asf-id>` is in the committee roster, `.committees.flink.roster` of `https://whimsy.apache.org/public/committee-info.json`, and `+1 (non-binding)` otherwise. Then follows one bullet per check group with no `FAIL` line, phrased for voters from that group's `[x]` lines only: what was verified, the build environment's OS and JDK, and the comparison against the previous release. Never list a `SKIPPED`, `UNKNOWN`, or `FAIL` check, including a `FAIL` the release manager deferred; mention no deferred finding, internal tooling such as this skill's scripts or subagents, or CI run details. It ends with `Best,` and `<name>`. Ask the requester for `<asf-id>` and `<name>` when the caller does not give them.
+The body says everything a voter needs, as briefly as possible: one bullet per topic, never one per report section. Its first line is `+1 (binding)` when `<asf-id>` is in the committee roster, `.committees.flink.roster` of `https://whimsy.apache.org/public/committee-info.json`, and `+1 (non-binding)` otherwise. The bullets follow the [template](#templates) in order, each written only from the `[x]` lines of its groups:
+
+| Bullet | Groups |
+| --- | --- |
+| Signatures and checksums of all release files, and the signed tag | 1, 10 |
+| Source release matches the tag; source build on the header's OS and JDK | 2, 3 |
+| Comparison of the source, binary, staged Maven artifacts, and Python packages with `<old>` | 2, 6, 4, 7 |
+| Wheels byte-identical to the ones CI built from the tag | 5 |
+| Local cluster with WordCount and a SQL Client query | 9 |
+| PyFlink install with the header's Python, Table API and DataStream jobs | 8 |
+| Website PR | 11 |
+
+Drop a bullet when one of its groups has a `FAIL` line, except the comparison bullet, which drops only that group's artifact, for example "binary" for a `FAIL` in group 6. Append `, and checked <FLINK keys>` only for the fix-specific regression checks this run performed and passed. Never list a `SKIPPED`, `UNKNOWN`, or `FAIL` check, including a `FAIL` the release manager deferred; mention no deferred finding, internal tooling such as this skill's scripts or subagents, or CI run details. It ends with `Best,` and `<name>`. Ask the requester for `<asf-id>` and `<name>` when the caller does not give them.
 
 ## Templates
 
@@ -83,7 +95,13 @@ In reply to: <lists.apache.org link of the ATR vote mail>
 
 +1 (binding) | +1 (non-binding)
 
-- <check group, phrased for voters: what was verified, OS and JDK, comparison against <old>>
+- Verified the signatures and checksums of all release files, and the signed tag
+- The source release matches the tag; built it from source on <OS> with JDK <n>
+- Compared the source, binary, staged Maven artifacts and Python packages with <old>: all changes are expected
+- The Python wheels are byte-identical to the ones built by the project's CI from the tag
+- Started a local cluster and ran WordCount and a SQL Client query
+- Installed PyFlink (Python <x>) and ran Table API and DataStream jobs[, and checked <FLINK keys>]
+- Checked the website PR
 
 Best,
 <name>
