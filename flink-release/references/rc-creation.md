@@ -184,12 +184,13 @@ Use an RSA 4096 key with sign and certify capability ([SC]) under the RM's Apach
 
 ## ATR integration
 
-Apache Trusted Releases (ATR, `<atr>`) carries each candidate from upload through vote to dist/release. Once a project uses ATR, a direct SVN commit to dist/release raises an "Unmanaged release" alert to private@, so every version of a round goes through ATR; SVN remains only for `KEYS`. Nexus staging and release, the PyPI upload, Git tags, Jira, Docker, and the website stay outside ATR. With an email vote, ATR's API covers only the agent rows below; resolving the vote, publishing, and announcing are web-only release manager actions.
+Apache Trusted Releases (ATR, `<atr>`) carries each candidate from upload through vote to dist/release. Once a project uses ATR, a direct SVN commit to dist/release raises an "Unmanaged release" alert to private@, so every version of a round goes through ATR; SVN remains only for `KEYS`. Nexus staging and release, the PyPI upload, Git tags, Jira, Docker, and the website stay outside ATR. Flink's ATR policy is `policy_vote_mode: "email"`, and `POST /api/vote/cast` and `POST /api/vote/resolve` work only in ATR's trusted vote mode, so both return 409 for Flink. ATR's API therefore covers only the agent rows below; casting a vote is a web UI or list-reply action of each voter, and resolving the vote, publishing, and announcing are web-only release manager actions.
 
 | Release action | ATR interface | Executor | Details |
 | --- | --- | --- | --- |
 | Stage RC files and run checks | `rsync`, `POST /api/release/commit`, `GET /api/checks/list` | Agent | [Step 10](#10-atr-upload-and-checks) |
 | Send `[VOTE]` | `POST /api/vote/start` | Agent | [Vote](vote.md) |
+| Cast a vote | Web `/vote/flink/<v>` or a reply to the ATR vote mail from `@apache.org` | Each voter, including the RM | [Vote](vote.md) |
 | Tally votes | `POST /api/vote/tabulate` | Agent, cross-checked with the thread | [Vote](vote.md) |
 | Close the vote and send `[RESULT]` | Web `/resolve/flink/<v>` | RM | [Vote](vote.md) |
 | Publish to dist/release | Web `/finish/flink/<v>` | RM | [Finalization](finalization.md) |
