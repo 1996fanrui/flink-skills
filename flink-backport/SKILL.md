@@ -46,7 +46,12 @@ Load the settings in every new shell. `env.sh` also finds the pull request autho
 ```sh
 . <skill dir>/scripts/env.sh
 git -C "$FLINK_SOURCE_REPO" fetch --quiet "$upstream"
+if [ "$(git -C "$FLINK_SOURCE_REPO" rev-parse --is-shallow-repository)" = true ]; then
+  git -C "$FLINK_SOURCE_REPO" fetch --quiet --unshallow "$upstream"
+fi
 ```
+
+The branch checks below need complete history: in a shallow clone, `git log --grep` silently misses a fix older than the cut.
 
 Do not change the working tree of `FLINK_SOURCE_REPO`. All work happens in worktrees.
 
