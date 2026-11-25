@@ -18,12 +18,15 @@ bash scripts/tracker.sh update <FLINK-KEY> <minor-version> '<json>'
 
 The body has `state`, and optionally `note` and `pr`. Omitting `note` keeps the stored note.
 
-| Target `state` | Required |
-| --- | --- |
-| `pr_open` | `pr` with `pr_state` `open` |
-| `merged` | `pr` with `pr_state` `merged`, or a `note` naming the commit |
-| `not_needed` | `note` with the reason |
-| `needs_human` | `note` with the reason and the decision needed |
+| Target `state` | Allowed from | Required |
+| --- | --- | --- |
+| `needs_backport` | `pending_check`, `needs_human` | Nothing |
+| `pr_open` | `needs_backport` | `pr` with `pr_state` `open` |
+| `merged` | `pending_check`, `needs_backport`, `pr_open` | `pr` with `pr_state` `merged`, or a `note` naming the commit |
+| `not_needed` | `pending_check`, `needs_backport`, `needs_human` | `note` with the reason |
+| `needs_human` | `pending_check`, `needs_backport`, `pr_open` | `note` with the reason and the decision needed |
+
+The server rejects every other move between these states with 409. Repeating the current state is allowed, so a retry is safe. A `pending_check` cell becomes `needs_backport` before `pr_open`, and a `needs_human` cell becomes `needs_backport` before `merged`.
 
 `pr` must contain all of these fields:
 
@@ -37,8 +40,6 @@ The body has `state`, and optionally `note` and `pr`. Omitting `note` keeps the 
 ```
 
 `pr_source` is `platform` for a pull request this workflow opened and `external` for anyone else's. The server reads a merged pull request's merge time and commits from GitHub; a `pr` that sends `merged_at` or `commits` is rejected with 422.
-
-The server checks every transition, and repeating the current state is allowed, so a retry is safe.
 
 | Status | Meaning | What to do |
 | --- | --- | --- |
