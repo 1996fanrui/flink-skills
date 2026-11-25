@@ -83,7 +83,7 @@ timeout 60 curl -sS --max-time 60 -u "$NEXUS_CRED" -H 'Accept: application/json'
 
 ### 10: ATR upload and checks
 
-Upload with `rsync` over SSH. The web and API uploads are limited to 512 MiB per request, and a 2.x binary archive is about 605 MB. ATR's rsync accepts only `-av` and `--delete`, keeps subdirectories such as `python/`, and stores each upload as a new revision; `--delete` makes the release hold exactly this RC's files, also when the upload replaces an earlier RC. ATR keeps validating the files after `rsync` exits and creates the upload's revision minutes later (about 2 for 2.2.2-rc2), so record the commit only once `latest_revision_number` has moved past its pre-upload value. Recording the commit creates another revision, so read `<rev>` after it.
+Upload with `rsync` over SSH. The web and API uploads are limited to 512 MiB per request, and a 2.x binary archive is about 605 MB. ATR's rsync accepts only `-av` and `--delete`, keeps subdirectories such as `python/`, and stores each upload as a new revision; `--delete` makes the release hold exactly this RC's files, also when the upload replaces an earlier RC, whose vote must be [resolved](vote.md) first. ATR keeps validating the files after `rsync` exits and creates the upload's revision minutes later (about 2 for 2.2.2-rc2), so record the commit only once `latest_revision_number` has moved past its pre-upload value. Recording the commit creates another revision, so read `<rev>` after it.
 
 ```bash
 before=$(timeout 30 curl -sS --max-time 30 <atr>/api/release/get/flink/<v> | jq -er .release.latest_revision_number)
@@ -184,7 +184,7 @@ Use an RSA 4096 key with sign and certify capability ([SC]) under the RM's Apach
 
 ## ATR integration
 
-Apache Trusted Releases (ATR, `<atr>`) carries each candidate from upload through vote to dist/release. Once a project uses ATR, a direct SVN commit to dist/release raises an "Unmanaged release" alert to private@, so every version of a round goes through ATR; SVN remains only for `KEYS`. Nexus staging and release, the PyPI upload, Git tags, Jira, Docker, and the website stay outside ATR. Flink's ATR policy is `policy_vote_mode: "email"`, and `POST /api/vote/cast` and `POST /api/vote/resolve` work only in ATR's trusted vote mode, so both return 409 for Flink. ATR's API therefore covers only the agent rows below; casting a vote is a web UI or list-reply action of each voter, and resolving the vote, publishing, and announcing are web-only release manager actions.
+Apache Trusted Releases (ATR, `<atr>`) carries each candidate from upload through vote to dist/release. Once a project uses ATR, a direct SVN commit to dist/release raises an "Unmanaged release" alert to private@, so every version of a round goes through ATR; SVN remains only for `KEYS`. Nexus staging and release, the PyPI upload, Git tags, Jira, Docker, and the website stay outside ATR. Flink's ATR policy is `policy_vote_mode: "email"`, and `POST /api/vote/cast` and `POST /api/vote/resolve` work only in ATR's trusted vote mode, so both return 403 for Flink. ATR's API therefore covers only the agent rows below; casting a vote is a web UI or list-reply action of each voter, and resolving the vote, publishing, and announcing are web-only release manager actions. Uploads and `release/commit` work only while the release is in `release_candidate_draft`, so a started vote must be resolved before the next RC's upload.
 
 | Release action | ATR interface | Executor | Details |
 | --- | --- | --- | --- |
@@ -192,7 +192,7 @@ Apache Trusted Releases (ATR, `<atr>`) carries each candidate from upload throug
 | Send `[VOTE]` | `POST /api/vote/start` | Agent | [Vote](vote.md) |
 | Cast a vote | Web `/vote/flink/<v>` or a reply to the ATR vote mail from `@apache.org` | Each voter, including the RM | [Vote](vote.md) |
 | Tally votes | `POST /api/vote/tabulate` | Agent, cross-checked with the thread | [Vote](vote.md) |
-| Close the vote and send `[RESULT]` | Web `/resolve/flink/<v>` | RM | [Vote](vote.md) |
+| Close the vote as passed, failed, or cancelled; always sends `[RESULT]` | Web `/resolve/flink/<v>` | RM | [Vote](vote.md) |
 | Publish to dist/release | Web `/finish/flink/<v>` | RM | [Finalization](finalization.md) |
 | Record Maven Central and PyPI | `POST /api/distribution/record` | Agent | [Finalization](finalization.md) |
 | Announce and archive the superseded release | Web `/announce/flink/<v>` and `/file/flink/<old>` | RM | [Follow-up](follow-up.md) |
