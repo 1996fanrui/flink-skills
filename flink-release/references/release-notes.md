@@ -4,7 +4,11 @@ This page is the standard for a patch release's user-facing release notes in the
 
 ## Input
 
+The source of truth for the issue list is the git range `release-<prev>..<rc commit>`, where `<prev>` is the previous release on this line: it is exactly what the RC contains. The Jira query supplies each issue's type, summary, and Release Note field, and the version ID for the full release-notes link:
+
 ```bash
+timeout 30 git -C <clone> log --format=%s refs/tags/release-<prev>..<rc commit> \
+  | grep -oE 'FLINK-[0-9]+' | sort -u                                       # every Jira ID with a commit in the RC
 JIRA=https://issues.apache.org/jira/rest/api/2
 timeout 30 curl -sS --max-time 30 "$JIRA/project/FLINK/versions" \
   | jq -r '.[] | select(.name == "<v>") | [.id, .released] | @tsv'        # exactly one row: <version-id>, false
@@ -16,6 +20,8 @@ timeout 30 curl -sS --max-time 30 -G "$JIRA/search" \
 ```
 
 Page with `startAt` until every one of `.total` issues is read. `customfield_12310192` is the Release Note field. The full Jira release-notes link is `https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=<version-id>&projectId=12315522`.
+
+Cross-check every Jira ID from the git range against the kept and excluded lists of the [release manager review](#release-manager-review), whatever its Jira status, resolution, or Fix Version, and classify each one missing from both by the rules below; rerun the check for every new RC commit. A user-facing fix whose issue is unresolved, or resolved other than Fixed, is still listed: mark its Jira state in the review and ask its owner to resolve it as Fixed. The Jira query alone missed FLINK-35661 in 1.20.6, whose fix was in the RC while its issue was reopened.
 
 ## Exclude
 
@@ -73,4 +79,4 @@ We highly recommend all users upgrade to Flink <v>.
 
 ## Release manager review
 
-Before opening the flink-web PR, show the release manager the intro and two lists: **kept** issues with key, Jira type, section, and displayed sentence (marking reworded ones), and **excluded** issues with key, Jira summary, and a one-line reason naming the exclusion rule. Open the PR only after the release manager confirms, and record the confirmation in `state.md`. If an issue gains or loses this Fix Version later, classify only that issue and confirm it the same way.
+Before opening the flink-web PR, show the release manager the intro and two lists: **kept** issues with key, Jira type, section, and displayed sentence (marking reworded ones), and **excluded** issues with key, Jira summary, and a one-line reason naming the exclusion rule. Open the PR only after the release manager confirms, and record the confirmation in `state.md`. If a new RC commit or a Fix Version change adds or removes an issue later, classify only that issue and confirm it the same way.
